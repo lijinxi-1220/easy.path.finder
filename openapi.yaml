@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: Easy Path Finder APIs
+  version: 0.1.0
+servers:
+  - url: https://{host}
+    variables:
+      host:
+        default: localhost:8000
+paths:
+  /login:
+    post:
+      summary: 用户登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                email: { type: string }
+                phone_number: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string }
+                  token: { type: string }
+                  last_login_date: { type: string }
+        '401': { description: invalid_credentials }
+  /resume/upload:
+    post:
+      summary: 简历上传解析
+      responses:
+        '200': { description: OK }
+        '415': { description: format_not_supported }
+  /resume/score:
+    get:
+      summary: 简历评分
+      responses:
+        '200': { description: OK }
+  /match/analysis:
+    post:
+      summary: 匹配度分析
+      responses:
+        '200': { description: OK }
+  /plan/goals:
+    get:
+      summary: 目标列表
+      responses:
+        '200': { description: OK }
+    post:
+      summary: 新建目标
+      responses:
+        '200': { description: OK }
+  /chat/interact:
+    post:
+      summary: 对话交互
+      responses:
+        '200': { description: OK }
+  /service/subscription:
+    post:
+      summary: 会员订阅创建
+      responses:
+        '200': { description: OK }
+  /service/subscription/webhook:
+    post:
+      summary: 订阅支付回调
+      responses:
+        '200': { description: OK }
+  /chat/resume_guide:
+    get:
+      summary: 简历指导问题
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /chat/history:
+    get:
+      summary: 对话历史摘要
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /chat/messages:
+    get:
+      summary: 对话消息列表
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /service/recommend:
+    get:
+      summary: 推荐课程与实习
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /service/mentors:
+    get:
+      summary: 导师列表
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /service/consult:
+    post:
+      summary: 预约导师咨询
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /service/projects:
+    get:
+      summary: 国际项目列表
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /user/privacy:
+    put:
+      summary: 用户隐私设置
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /user/history:
+    get:
+      summary: 用户历史记录
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /user/progress:
+    get:
+      summary: 用户学习进度
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /plan/tasks/generate:
+    post:
+      summary: 生成任务
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /plan/tasks:
+    get:
+      summary: 任务列表
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+    post:
+      summary: 新建任务
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+    put:
+      summary: 更新任务
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /plan/doc:
+    get:
+      summary: 计划文档
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /plan/adjust:
+    post:
+      summary: 计划调整
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /resume/optimize:
+    post:
+      summary: 简历优化
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /resume/manage:
+    get:
+      summary: 简历管理
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+    post:
+      summary: 新增简历条目
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+    put:
+      summary: 更新简历条目
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /resume/export:
+    get:
+      summary: 简历导出
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+  /match/job_profile:
+    get:
+      summary: 岗位画像
+      responses:
+        '200': { description: OK }
+  /match/job_detail:
+    get:
+      summary: 岗位详情
+      responses:
+        '200': { description: OK }
+  /match/school_detail:
+    get:
+      summary: 学校画像
+      responses:
+        '200': { description: OK }
+  /match/recommend:
+    get:
+      summary: 匹配推荐
+      responses:
+        '200': { description: OK }
+  /register:
+    post:
+      summary: 用户注册
+      responses:
+        '200': { description: OK }
+  /login/code:
+    post:
+      summary: 验证码登录
+      responses:
+        '200': { description: OK }
+  /send_code:
+    post:
+      summary: 发送验证码
+      responses:
+        '200': { description: OK }
+  /profile/{user_id}:
+    get:
+      summary: 用户资料
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /logout:
+    post:
+      summary: 退出登录
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: OK }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code: { type: integer }
+              error: { type: string }

@@ -37,10 +37,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'example'
+    'users',
+    'resumes'
+    , 'matches'
+    , 'plans'
+    , 'chat'
+    , 'userdata'
+    , 'services'
 ]
 
 MIDDLEWARE = [
+    'core.middleware.RequestIdMiddleware',
+    'core.middleware.AccessLogMiddleware',
+    'core.middleware.ExceptionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
