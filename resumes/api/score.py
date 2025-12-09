@@ -17,13 +17,15 @@ def score(request):
         bearer = request.headers.get("Authorization", "")
         token = bearer.split(" ", 1)[1] if bearer.startswith("Bearer ") else ""
         if token_role(token) != "admin":
-            return err(1006, "permission_denied", status=403)
+            from core.exceptions import ErrorCode
+            return err(ErrorCode.PERMISSION_DENIED)
         user_id = provided_uid
     else:
         user_id = user_token_uid
     resume_id = request.GET.get("resume_id") or ""
     if not user_id or not resume_id:
-        return err(1002, "missing_params")
+        from core.exceptions import ErrorCode
+        return err(ErrorCode.MISSING_PARAMS)
     r = redis_client.redis.hgetall(f"resume:id:{resume_id}")
     if not r or r.get("user_id") != user_id:
         return err(2004, "resume_not_found", status=404)

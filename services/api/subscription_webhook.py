@@ -1,32 +1,29 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from services import redis_client
+from django.views.decorators.http import require_POST
 from services.repo import ServicesRepo
 from services.config import SUBSCRIPTION_WEBHOOK_SECRET
 from core.security import verify_hmac
 import json
-from core.utils import ok
-from core.exceptions import BusinessError
+from core.utils import ok, err
+from core.exceptions import BusinessError, ErrorCode
 
 
 @csrf_exempt
+@require_POST
 def subscription_webhook(request):
-    if request.method != "POST":
-        raise BusinessError(405, "method_not_allowed", 405)
-    if not redis_client.redis:
-        raise BusinessError(500, "redis_not_configured", 500)
     raw = request.body or b""
     sig = request.headers.get("X-Signature", "")
     if not verify_hmac(SUBSCRIPTION_WEBHOOK_SECRET, raw, sig):
-        raise BusinessError(6006, "payment_failed", 400)
+        return err(ErrorCode.CREDENTIALS_ERROR)
     try:
         event = json.loads(raw.decode("utf-8"))
-    except Exception:
-        raise BusinessError(6007, "invalid_params", 400)
+    except json.JSONDecodeError:
+        return err(ErrorCode.REQUEST_ERROR)
     uid = event.get("user_id")
     status = event.get("status")
     if not uid or status not in {"active", "failed"}:
-        raise BusinessError(6007, "invalid_params", 400)
+        return err(ErrorCode.REQUEST_ERROR)
     if status == "active":
         ServicesRepo.update_subscription(uid, {"subscription_status": "active"})
     else:

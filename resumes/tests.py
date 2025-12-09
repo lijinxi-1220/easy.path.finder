@@ -1,37 +1,18 @@
 import json
 from django.test import SimpleTestCase, Client
 from django.core.files.uploadedfile import SimpleUploadedFile
-from users import redis_client as user_rc
+from core import redis_client as user_rc
 from resumes import redis_client as resume_rc
+from core.testing.fake_redis import FakeRedis
 
 
-class FakeRedis:
-    def __init__(self):
-        self.kv = {}
-        self.hash = {}
-    def set(self, k, v, ex=None):
-        self.kv[k] = v
-        return True
-    def get(self, k):
-        return self.kv.get(k)
-    def exists(self, k):
-        return 1 if k in self.kv else 0
-    def hset(self, k, mapping=None, **kwargs):
-        m = mapping or kwargs
-        self.hash.setdefault(k, {})
-        self.hash[k].update(m)
-        return True
-    def hgetall(self, k):
-        return self.hash.get(k, {})
-    def delete(self, k):
-        return 1 if self.kv.pop(k, None) is not None else 0
 
 
 class ResumeApiTests(SimpleTestCase):
     def setUp(self):
         # share fake redis between user & resume for simplicity
         fake = FakeRedis()
-        user_rc.redis = fake
+        user_rc.redis_client = fake
         resume_rc.redis = fake
         self.client = Client()
 

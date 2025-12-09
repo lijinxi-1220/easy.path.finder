@@ -1,36 +1,12 @@
 import json
 from django.test import SimpleTestCase, Client
-from users import redis_client as user_rc
-from services import redis_client as svc_rc
-
-
-class FakeRedis:
-    def __init__(self):
-        self.kv = {}
-        self.hash = {}
-    def set(self, k, v, ex=None):
-        self.kv[k] = v
-        return True
-    def get(self, k):
-        return self.kv.get(k)
-    def exists(self, k):
-        return 1 if k in self.kv else 0
-    def hset(self, k, mapping=None, **kwargs):
-        m = mapping or kwargs
-        self.hash.setdefault(k, {})
-        self.hash[k].update(m)
-        return True
-    def hgetall(self, k):
-        return self.hash.get(k, {})
-    def delete(self, k):
-        return 1 if self.kv.pop(k, None) is not None else 0
+import core
+from core.testing.fake_redis import FakeRedis
 
 
 class ServicesApiTests(SimpleTestCase):
     def setUp(self):
-        fake = FakeRedis()
-        user_rc.redis = fake
-        svc_rc.redis = fake
+        core.redis_client = FakeRedis()
         self.client = Client()
         self.client.post(
             "/register",
@@ -43,12 +19,16 @@ class ServicesApiTests(SimpleTestCase):
             content_type="application/json",
         )
         self.token = r.json()["token"]
-        svc_rc.redis.set("svc:course:list", "c1")
-        svc_rc.redis.hset("svc:course:id:c1", mapping={"name": "Django Course", "intro": "Web dev", "provider": "Example", "link": "https://example.com"})
-        svc_rc.redis.set("mentor:list:backend", "m1")
-        svc_rc.redis.hset("mentor:id:m1", mapping={"name": "Bob", "title": "Senior", "years": "8", "fee": "100"})
-        svc_rc.redis.set("project:list:exchange", "p1")
-        svc_rc.redis.hset("project:id:p1", mapping={"name": "Global Exchange", "intro": "Intl", "time": "2026", "location": "US", "method": "apply"})
+        rc = core.redis_client
+        rc.set("svc:course:list", "c1")
+        rc.hset("svc:course:id:c1", mapping={"name": "Django Course", "intro": "Web dev", "provider": "Example",
+                                                 "link": "https://example.com"})
+        rc.set("mentor:list:backend", "m1")
+        rc.hset("mentor:id:m1", mapping={"name": "Bob", "title": "Senior", "years": "8", "fee": "100"})
+        rc.set("project:list:exchange", "p1")
+        rc.hset("project:id:p1",
+                    mapping={"name": "Global Exchange", "intro": "Intl", "time": "2026", "location": "US",
+                             "method": "apply"})
 
     def test_services_endpoints(self):
         r = self.client.get("/service/recommend?service_type=course", HTTP_AUTHORIZATION=f"Bearer {self.token}")
@@ -72,3 +52,24 @@ class ServicesApiTests(SimpleTestCase):
         )
         self.assertEqual(r.status_code, 200)
 
+    def test_subscription_webhook(self):
+        # prepare subscription
+        self.client.post(
+            "/service/subscription",
+            data=json.dumps({"subscription_type": "month", "payment_info": {"channel": "mock"}}),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+        # send webhook
+        import json as _json
+        from core.security import verify_hmac
+        from services.config import SUBSCRIPTION_WEBHOOK_SECRET
+        body = _json.dumps({"user_id": "dummy", "status": "active"}).encode("utf-8")
+        sig = __import__("hmac").new(SUBSCRIPTION_WEBHOOK_SECRET.encode(), body, __import__("hashlib").sha256).hexdigest()
+        r = self.client.post(
+            "/service/subscription/webhook",
+            data=body,
+            content_type="application/json",
+            HTTP_X_SIGNATURE=sig,
+        )
+        self.assertEqual(r.status_code, 200)

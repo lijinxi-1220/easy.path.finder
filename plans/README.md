@@ -32,6 +32,13 @@
 - 响应：目标完整数据或列表，列表含 `meta.total/page/page_size`
 - 错误：`4001` 目标不存在
 
+IDL（POST 统一入口，`action` 路由化）：
+- `action=list`：体内支持 `status|q|due_from|due_to|sort_by|sort_order|page|page_size`，响应 `goals` 与 `meta`
+- `action=get`：`goal_id`，响应单目标对象
+- `action=create`：`goal_name|description|target_date`，响应创建后的目标
+- `action=update`：`goal_id` 与更新字段，响应更新后的目标
+- `action=delete`：`goal_id`，响应 `{ deleted: true }`
+
 示例：
 ```bash
 # 新建目标
@@ -55,6 +62,27 @@ curl -s http://localhost:8000/plan/goals -H "Authorization: Bearer $TOKEN"
 - POST 参数：`goal_id`、`task_name`、可选 `due_date`、`priority`、`status`
 - PUT 参数：`task_id`、可选 `task_name`、`due_date`、`priority`、`status`
 - 错误：`4001` 目标不存在、`4003` 任务不存在
+
+IDL（POST 统一入口，`action` 路由化）：
+- `action=list`：体内支持 `goal_id|status|priority|due_from|due_to|sort_by|sort_order|page|page_size`
+- `action=generate`：`goal_id`，响应 `tasks` 列表
+- 默认创建：`goal_id|task_name` + 可选字段，响应单任务对象
+
+示例：
+```bash
+# 列表（POST）
+curl -s -X POST http://localhost:8000/plan/tasks \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"action":"list","goal_id":"'$GID'","status":"pending","page":1,"page_size":10}'
+# 生成（POST）
+curl -s -X POST http://localhost:8000/plan/tasks \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"action":"generate","goal_id":"'$GID'"}'
+# 创建（默认）
+curl -s -X POST http://localhost:8000/plan/tasks \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"goal_id":"'$GID'","task_name":"完善技能清单"}'
+```
 
 ### 规划书生成 `GET /plan/doc`
 - 参数：可选 `goal_id`

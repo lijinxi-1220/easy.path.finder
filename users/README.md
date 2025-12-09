@@ -57,9 +57,9 @@
 ```
 响应：
 ```json
-{ "user_id": "...", "token": "<jwt>", "last_login_date": "...", "subscription_status": "active" }
+{ "user_id": "...", "token": "<jwt>", "last_login_date": "..." }
 ```
-错误：`1003` 账号或密码错误、`1004` 账号未激活、`500` Redis 未配置
+错误：`{ code, error }`（如凭证错误、频率限制等）
 
 ### 发送验证码 `POST /send_code`
 请求体（二选一）：
@@ -67,8 +67,8 @@
 { "email": "a@x.com" }
 { "phone_number": "123" }
 ```
-响应：`{ "success": true }`（当前版本仅生成并存储验证码，不实际发送）
-错误：`1002` 参数缺失、`1005` 用户不存在、`1020` 频率限制（60 秒）、`500` Redis 未配置
+响应：`{ "code": "123456" }`（测试环境返回；生产应通过邮件/短信发送）
+错误：`1002` 参数缺失、`1003` 用户不存在、`1004` 频率限制（60 秒）、`500` Redis 未配置
 
 ### 验证码登录 `POST /login/code`
 请求体：
@@ -80,18 +80,40 @@
 { "phone_number": "123", "code": "123456" }
 ```
 响应：同密码登录
-错误：`1012` 验证码错误、其它同登录
+错误：`{ code, error }`（验证码错误、用户不存在等）
 
 ### 个人资料 `GET/POST/PUT /profile/<user_id>`
 - 认证：`Authorization: Bearer <jwt>`（本人访问；若访问他人资料需 `role=admin`）
 - GET 响应：完整资料 Hash（如 `username`、`email`、`phone_number`、`full_name`、`gender`、`avatar_url`、`registration_date` 等）
 - 更新字段：`full_name`、`gender`、`avatar_url`
-错误：`1010` token 无效、`1006` 权限不足、`1005` 用户不存在
+错误：`1007` credentials error（凭证错误/未认证）、`1008` permission denied（权限不足）、`1003` user not found（用户不存在）
 
 ### 退出登录 `POST /logout`
 - 认证：`Authorization: Bearer <jwt>`
 - 响应：`{ "success": true }`（将 `jti` 加入黑名单）
-错误：`1010` token 无效、`1011` token 过期
+错误：`{ code, error }`（token 无效/过期、权限不足等）
+
+## IDL（请求/响应字段）
+- `POST /register`
+  - 请求体：`username|password|email|phone_number`
+  - 响应字段：`user_id|username|registration_date|token`
+- `POST /login`
+  - 请求体：三选一标识 + `password`
+  - 响应字段：`user_id|token|last_login_date`
+- `POST /send_code`
+  - 请求体：二选一 `email|phone_number`
+  - 响应字段：`code`（测试环境返回）
+- `POST /login/code`
+  - 请求体：二选一标识 + `code`
+  - 响应字段：同登录
+- `GET /profile/{user_id}`
+  - 路径参数：`user_id`
+  - 响应字段：用户完整资料 Hash
+- `PUT /profile/{user_id}`
+  - 请求体：`full_name|gender|avatar_url`
+  - 响应字段：更新后的完整资料
+- `POST /logout`
+  - 响应字段：`success`
 
 ## cURL 验证示例
 
@@ -147,7 +169,6 @@ TOKEN=$(curl -s -X POST http://localhost:8000/login/code \
 - `user_id`：用户唯一 ID
 - `token`：JWT 令牌，`Authorization: Bearer <token>`
 - `last_login_date`、`registration_date`：ISO8601 UTC 时间
-- `subscription_status`：订阅状态，默认 `active`
 - 资料字段：`username`、`email`、`phone_number`、`full_name`、`gender`、`avatar_url` 等
 
 ## 测试

@@ -29,7 +29,8 @@ def upload_parse(request):
     provided_uid = request.POST.get("user_id") or (request.GET.get("user_id") or "")
     user_id = resolve_user_id(request, provided_uid)
     if not user_id:
-        return err(1006, "permission_denied", status=403)
+        from core.exceptions import ErrorCode
+        return err(ErrorCode.PERMISSION_DENIED)
     resume_name = request.POST.get("resume_name") or ""
     upfile: UploadedFile | None = request.FILES.get("resume_file")
 

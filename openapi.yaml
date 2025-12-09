@@ -1,13 +1,433 @@
 openapi: 3.0.3
 info:
   title: Easy Path Finder APIs
-  version: 0.1.0
+  version: 1.0.0
 servers:
   - url: https://{host}
     variables:
       host:
         default: localhost:8000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      in: query
+      name: page
+      schema: { type: integer, default: 1, minimum: 1 }
+    PageSize:
+      in: query
+      name: page_size
+      schema: { type: integer, default: 20, minimum: 1 }
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: { type: integer }
+        error: { type: string }
+    RegisterRequest:
+      type: object
+      properties:
+        username: { type: string }
+        password: { type: string }
+        email: { type: string }
+        phone_number: { type: string }
+      required: [ username, password ]
+    RegisterResponse:
+      type: object
+      properties:
+        user_id: { type: string }
+        username: { type: string }
+        registration_date: { type: string, format: date-time }
+        token: { type: string }
+    LoginRequest:
+      type: object
+      properties:
+        username: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone_number: { type: string, nullable: true }
+        password: { type: string }
+      required: [ password ]
+    LoginResponse:
+      type: object
+      properties:
+        user_id: { type: string }
+        token: { type: string }
+        last_login_date: { type: string, format: date-time }
+    SendCodeRequest:
+      type: object
+      properties:
+        email: { type: string }
+        phone_number: { type: string }
+    SendCodeResponse:
+      type: object
+      properties:
+        code: { type: string }
+    LoginCodeRequest:
+      type: object
+      properties:
+        email: { type: string }
+        phone_number: { type: string }
+        code: { type: string }
+      required: [ code ]
+    Profile:
+      type: object
+      properties:
+        user_id: { type: string }
+        username: { type: string }
+        email: { type: string, nullable: true }
+        phone_number: { type: string, nullable: true }
+        full_name: { type: string, nullable: true }
+        gender: { type: string, nullable: true }
+        avatar_url: { type: string, nullable: true }
+        registration_date: { type: string, format: date-time }
+        last_login_date: { type: string, format: date-time, nullable: true }
+        role: { type: string }
+    LogoutResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+    ResumeUploadResponse:
+      type: object
+      properties:
+        resume_id: { type: string }
+        file_url: { type: string }
+        parsed_content: { type: object }
+        parse_status: { type: string }
+    ResumeScoreResponse:
+      type: object
+      properties:
+        overall_score: { type: integer }
+        detail_scores: { type: object }
+        generated_date: { type: string, format: date-time }
+    OptimizationResponse:
+      type: object
+      properties:
+        optimization_suggestions: { type: array, items: { type: string } }
+    ResumeSummary:
+      type: object
+      properties:
+        resumes:
+          type: array
+          items:
+            type: object
+            properties:
+              resume_id: { type: string }
+              resume_name: { type: string }
+              is_default: { type: boolean }
+    ResumeManageUpdateResponse:
+      type: object
+      properties:
+        resume:
+          type: object
+          properties:
+            resume_id: { type: string }
+            resume_name: { type: string }
+            is_default: { type: string }
+            created_at: { type: string }
+            parsed_content: { type: object }
+            parse_status: { type: string }
+    DeletedResponse:
+      type: object
+      properties:
+        deleted: { type: boolean }
+    ExportResponse:
+      type: object
+      properties:
+        export_url: { type: string }
+        file_name: { type: string }
+    JobProfile:
+      type: object
+      properties:
+        job_profile_id: { type: string }
+        job_title: { type: string }
+        company: { type: string }
+        required_skills: { type: array, items: { type: string } }
+        required_experience: { type: string, nullable: true }
+        industry: { type: string, nullable: true }
+    MatchAnalysisResponse:
+      type: object
+      properties:
+        match_id: { type: string }
+        match_percentage: { type: integer }
+        match_details: { type: object }
+    RecommendationResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            type: object
+            properties:
+              job_title: { type: string }
+              company: { type: string }
+              match_percentage: { type: integer }
+        schools:
+          type: array
+          items:
+            type: object
+            properties:
+              school_name: { type: string }
+              major: { type: string }
+              rank: { type: string }
+    SchoolDetail:
+      type: object
+      properties:
+        school_id: { type: string }
+        school_name: { type: string }
+        major: { type: string }
+        rank: { type: string }
+    PlanGoal:
+      type: object
+      properties:
+        goal_id: { type: string }
+        user_id: { type: string }
+        goal_name: { type: string }
+        description: { type: string, nullable: true }
+        target_date: { type: string, nullable: true }
+        status: { type: string }
+        created_at: { type: string, format: date-time }
+    PlanGoalsListResponse:
+      type: object
+      properties:
+        goals: { type: array, items: { $ref: '#/components/schemas/PlanGoal' } }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    PlanTask:
+      type: object
+      properties:
+        task_id: { type: string }
+        goal_id: { type: string }
+        user_id: { type: string }
+        task_name: { type: string }
+        due_date: { type: string, nullable: true }
+        priority: { type: string, nullable: true }
+        status: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    TasksListResponse:
+      type: object
+      properties:
+        tasks: { type: array, items: { $ref: '#/components/schemas/PlanTask' } }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    PlanDocResponse:
+      type: object
+      properties:
+        plan_doc_url: { type: string }
+        plan_content: { type: object }
+    AdjustResponse:
+      type: object
+      properties:
+        adjusted_goal: { $ref: '#/components/schemas/PlanGoal' }
+        adjustment_reason: { type: string }
+        updated_at: { type: string, format: date-time }
+    ChatInteractResponse:
+      type: object
+      properties:
+        reply_content: { type: string }
+        timestamp: { type: string, format: date-time }
+        chat_id: { type: string }
+    ChatHistoryResponse:
+      type: object
+      properties:
+        chats:
+          type: array
+          items:
+            type: object
+            properties:
+              chat_id: { type: string }
+              message_content: { type: string, nullable: true }
+              reply_content: { type: string, nullable: true }
+              timestamp: { type: string, nullable: true }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    ChatMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              message_id: { type: string }
+              role: { type: string }
+              message_content: { type: string, nullable: true }
+              reply_content: { type: string, nullable: true }
+              timestamp: { type: string }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    ServiceRecommendResponse:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              intro: { type: string }
+              provider: { type: string }
+              link: { type: string }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    MentorsResponse:
+      type: object
+      properties:
+        mentors:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              title: { type: string }
+              years: { type: string, nullable: true }
+              fee: { type: string, nullable: true }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    ConsultRequest:
+      type: object
+      properties:
+        mentor_id: { type: string }
+        consult_topic: { type: string, nullable: true }
+        consult_time: { type: string, format: date-time, nullable: true }
+      required: [ mentor_id ]
+    ConsultResponse:
+      type: object
+      properties:
+        application_id: { type: string }
+        user_id: { type: string }
+        mentor_id: { type: string }
+        consult_topic: { type: string }
+        consult_time: { type: string }
+        application_status: { type: string }
+        feedback: { type: string }
+    ProjectsResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              intro: { type: string }
+              time: { type: string, nullable: true }
+              location: { type: string, nullable: true }
+              method: { type: string, nullable: true }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            page_size: { type: integer }
+    SubscriptionRequest:
+      type: object
+      properties:
+        subscription_type:
+          type: string
+          enum: [ month, quarter, year ]
+        payment_info:
+          type: object
+      required: [ subscription_type ]
+    SubscriptionResponse:
+      type: object
+      properties:
+        subscription_status: { type: string }
+        expire_date: { type: string, format: date-time }
+        privileges: { type: string, nullable: true, description: 'JSON string of privileges' }
+    WebhookRequest:
+      type: object
+      properties:
+        user_id: { type: string }
+        status:
+          type: string
+          enum: [ active, failed ]
+      required: [ user_id, status ]
+    WebhookResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+    PrivacyResponse:
+      type: object
+      properties:
+        privacy_settings: { type: object }
+        status: { type: string }
+    UserHistoryResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type: { type: string }
+              action_content: { type: string }
+              timestamp: { type: string }
+    UserProgressResponse:
+      type: object
+      properties:
+        task_progress:
+          type: object
+          properties:
+            total: { type: integer }
+            completed: { type: integer }
+            rate: { type: number }
+        ability_trend:
+          type: array
+          items:
+            type: object
+            properties:
+              week: { type: string }
+              score: { type: integer }
 paths:
+  /register:
+    post:
+      summary: 用户注册
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegisterResponse' }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
   /login:
     post:
       summary: 用户登录
@@ -15,13 +435,493 @@ paths:
         required: true
         content:
           application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /send_code:
+    post:
+      summary: 发送验证码
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendCodeRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/SendCodeResponse' } } } }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /login/code:
+    post:
+      summary: 验证码登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginCodeRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /profile/{user_id}:
+    get:
+      summary: 用户资料
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
+        '401': { description: Unauthorized }
+    put:
+      summary: 更新资料
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
               type: object
               properties:
-                username: { type: string }
-                email: { type: string }
-                phone_number: { type: string }
-                password: { type: string }
+                full_name: { type: string }
+                gender: { type: string }
+                avatar_url: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
+  /logout:
+    post:
+      summary: 退出登录
+      security: [ { bearerAuth: [ ] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/LogoutResponse' } } } }
+  /resume/upload:
+    post:
+      summary: 简历上传解析
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                resume_name: { type: string }
+                resume_file: { type: string, format: binary }
+                skills: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeUploadResponse' } } } }
+  /resume/score:
+    get:
+      summary: 简历评分
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: resume_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeScoreResponse' } } } }
+  /resume/optimize:
+    get:
+      summary: 简历优化建议
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: resume_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: target_job
+          required: false
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/OptimizationResponse' } } } }
+  /resume/manage:
+    get:
+      summary: 简历列表
+      security: [ { bearerAuth: [ ] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeSummary' } } } }
+    put:
+      summary: 更新简历条目
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resume_id: { type: string }
+                resume_name: { type: string }
+                is_default: { type: boolean }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeManageUpdateResponse' } } } }
+    delete:
+      summary: 删除简历条目
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resume_id: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/DeletedResponse' } } } }
+  /resume/export:
+    post:
+      summary: 简历导出
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                resume_id: { type: string }
+                template_id: { type: string, enum: [ basic, modern, compact ] }
+                export_format: { type: string, enum: [ PDF, DOCX, pdf, docx ] }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ExportResponse' } } } }
+  /match/job_profile:
+    get:
+      summary: 岗位画像
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: job_title
+          required: true
+          schema: { type: string }
+        - in: query
+          name: industry
+          required: false
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/JobProfile' } } } }
+  /match/job_detail:
+    get:
+      summary: 岗位详情
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: job_profile_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/JobProfile' } } } }
+  /match/school_detail:
+    get:
+      summary: 学校详情
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: school_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/SchoolDetail' } } } }
+  /match/analysis:
+    post:
+      summary: 匹配度分析
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resume_id: { type: string }
+                target_type: { type: string, enum: [ job, school ] }
+                target_id: { type: string, nullable: true }
+                user_id: { type: string, nullable: true }
+              required: [ resume_id, target_type ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MatchAnalysisResponse' } } } }
+  /match/recommend:
+    get:
+      summary: 匹配推荐
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: preference
+          required: true
+          schema: { type: string, enum: [ job, school, both ] }
+        - in: query
+          name: resume_id
+          required: false
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/RecommendationResponse' } } } }
+  /match/admin/job_profiles/import:
+    post:
+      summary: 导入岗位画像（管理员）
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  job_profile_id: { type: string }
+                  job_title: { type: string }
+                  company: { type: string }
+                  required_skills: { type: array, items: { type: string } }
+                  required_experience: { type: string }
+                  industry: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { imported: { type: integer } } } } } }
+  /match/admin/schools/import:
+    post:
+      summary: 导入学校画像（管理员）
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  school_id: { type: string }
+                  school_name: { type: string }
+                  major: { type: string }
+                  rank: { type: string }
+                  slug: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { imported: { type: integer } } } } } }
+  /plan/goals:
+    get:
+      summary: 目标列表
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: goal_id
+          required: false
+          schema: { type: string }
+        - in: query
+          name: status
+          required: false
+          schema: { type: string }
+        - in: query
+          name: q
+          required: false
+          schema: { type: string }
+        - in: query
+          name: due_from
+          required: false
+          schema: { type: string }
+        - in: query
+          name: due_to
+          required: false
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanGoalsListResponse' } } } }
+    post:
+      summary: 新建目标
+      description: 支持 POST action 路由：当 body 包含 `action` 时可执行 list|get|update|delete；默认不含 `action` 为创建。
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: { type: string, enum: [ list, get, update, delete, create ] }
+                goal_name: { type: string }
+                description: { type: string }
+                target_date: { type: string }
+              required: [ goal_name ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanGoal' } } } }
+    put:
+      summary: 更新目标
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goal_id: { type: string }
+                goal_name: { type: string }
+                description: { type: string }
+                target_date: { type: string }
+                status: { type: string }
+              required: [ goal_id ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanGoal' } } } }
+    delete:
+      summary: 删除目标
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goal_id: { type: string }
+              required: [ goal_id ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { deleted: { type: boolean } } } } } }
+  /plan/tasks/generate:
+    post:
+      summary: 生成任务
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goal_id: { type: string }
+              required: [ goal_id ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TasksListResponse' } } } }
+  /plan/tasks:
+    get:
+      summary: 任务列表
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: goal_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: status
+          required: false
+          schema: { type: string }
+        - in: query
+          name: priority
+          required: false
+          schema: { type: string }
+        - in: query
+          name: due_from
+          required: false
+          schema: { type: string }
+        - in: query
+          name: due_to
+          required: false
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TasksListResponse' } } } }
+    post:
+      summary: 创建任务
+      description: 支持 POST action 路由：当 body 包含 `action` 时可执行 list|generate；默认不含 `action` 为创建。
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: { type: string, enum: [ list, generate, create ] }
+                goal_id: { type: string }
+                task_name: { type: string }
+                due_date: { type: string }
+                priority: { type: string }
+                status: { type: string }
+              required: [ goal_id, task_name ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanTask' } } } }
+    put:
+      summary: 更新任务
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_id: { type: string }
+                task_name: { type: string }
+                due_date: { type: string }
+                priority: { type: string }
+                status: { type: string }
+              required: [ task_id ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanTask' } } } }
+  /plan/doc:
+    get:
+      summary: 规划文档
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: goal_id
+          required: false
+          schema: { type: string, nullable: true }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanDocResponse' } } } }
+  /plan/adjust:
+    post:
+      summary: 路径调整
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goal_id: { type: string }
+                task_completion:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      task_id: { type: string }
+                      status: { type: string }
+              required: [ goal_id ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AdjustResponse' } } } }
+  /chat/interact:
+    post:
+      summary: 对话交互
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message_content: { type: string }
+                chat_scene: { type: string, nullable: true }
+                chat_id: { type: string, nullable: true }
+              required: [ message_content ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ChatInteractResponse' } } } }
+  /chat/resume_guide:
+    get:
+      summary: 简历完善引导
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: resume_id
+          required: true
+          schema: { type: string }
       responses:
         '200':
           description: OK
@@ -30,258 +930,171 @@ paths:
               schema:
                 type: object
                 properties:
-                  user_id: { type: string }
-                  token: { type: string }
-                  last_login_date: { type: string }
-        '401': { description: invalid_credentials }
-  /resume/upload:
-    post:
-      summary: 简历上传解析
-      responses:
-        '200': { description: OK }
-        '415': { description: format_not_supported }
-  /resume/score:
-    get:
-      summary: 简历评分
-      responses:
-        '200': { description: OK }
-  /match/analysis:
-    post:
-      summary: 匹配度分析
-      responses:
-        '200': { description: OK }
-  /plan/goals:
-    get:
-      summary: 目标列表
-      responses:
-        '200': { description: OK }
-    post:
-      summary: 新建目标
-      responses:
-        '200': { description: OK }
-  /chat/interact:
-    post:
-      summary: 对话交互
-      responses:
-        '200': { description: OK }
-  /service/subscription:
-    post:
-      summary: 会员订阅创建
-      responses:
-        '200': { description: OK }
-  /service/subscription/webhook:
-    post:
-      summary: 订阅支付回调
-      responses:
-        '200': { description: OK }
-  /chat/resume_guide:
-    get:
-      summary: 简历指导问题
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
+                  guide_question: { type: array, items: { type: string } }
+                  missing_field: { type: array, items: { type: string } }
   /chat/history:
     get:
       summary: 对话历史摘要
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ChatHistoryResponse' } } } }
   /chat/messages:
     get:
       summary: 对话消息列表
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: chat_id
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ChatMessagesResponse' } } } }
   /service/recommend:
     get:
-      summary: 推荐课程与实习
-      security:
-        - bearerAuth: []
+      summary: 课程/实习推荐
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: service_type
+          required: true
+          schema: { type: string, enum: [ course, internship ] }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - in: query
+          name: sort_by
+          schema: { type: string }
+        - in: query
+          name: sort_order
+          schema: { type: string, enum: [ asc, desc ] }
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ServiceRecommendResponse' } } } }
   /service/mentors:
     get:
       summary: 导师列表
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: field
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - in: query
+          name: sort_by
+          schema: { type: string }
+        - in: query
+          name: sort_order
+          schema: { type: string, enum: [ asc, desc ] }
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MentorsResponse' } } } }
   /service/consult:
     post:
       summary: 预约导师咨询
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConsultRequest' }
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConsultResponse' } } } }
   /service/projects:
     get:
       summary: 国际项目列表
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: project_type
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - in: query
+          name: sort_by
+          schema: { type: string }
+        - in: query
+          name: sort_order
+          schema: { type: string, enum: [ asc, desc ] }
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectsResponse' } } } }
+  /service/subscription:
+    post:
+      summary: 会员订阅创建
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubscriptionRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/SubscriptionResponse' } } } }
+  /service/subscription/webhook:
+    post:
+      summary: 订阅支付回调
+      parameters:
+        - in: header
+          name: X-Signature
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WebhookRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/WebhookResponse' } } } }
   /user/privacy:
     put:
       summary: 用户隐私设置
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                privacy_settings: { type: object }
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyResponse' } } } }
   /user/history:
     get:
       summary: 用户历史记录
-      security:
-        - bearerAuth: []
+      security: [ { bearerAuth: [ ] } ]
+      parameters:
+        - in: query
+          name: time_range
+          required: false
+          schema: { type: string, description: 'startISO,endISO' }
       responses:
-        '200': { description: OK }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserHistoryResponse' } } } }
   /user/progress:
     get:
-      summary: 用户学习进度
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /plan/tasks/generate:
-    post:
-      summary: 生成任务
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /plan/tasks:
-    get:
-      summary: 任务列表
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-    post:
-      summary: 新建任务
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-    put:
-      summary: 更新任务
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /plan/doc:
-    get:
-      summary: 计划文档
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /plan/adjust:
-    post:
-      summary: 计划调整
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /resume/optimize:
-    post:
-      summary: 简历优化
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /resume/manage:
-    get:
-      summary: 简历管理
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-    post:
-      summary: 新增简历条目
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-    put:
-      summary: 更新简历条目
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /resume/export:
-    get:
-      summary: 简历导出
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-  /match/job_profile:
-    get:
-      summary: 岗位画像
-      responses:
-        '200': { description: OK }
-  /match/job_detail:
-    get:
-      summary: 岗位详情
-      responses:
-        '200': { description: OK }
-  /match/school_detail:
-    get:
-      summary: 学校画像
-      responses:
-        '200': { description: OK }
-  /match/recommend:
-    get:
-      summary: 匹配推荐
-      responses:
-        '200': { description: OK }
-  /register:
-    post:
-      summary: 用户注册
-      responses:
-        '200': { description: OK }
-  /login/code:
-    post:
-      summary: 验证码登录
-      responses:
-        '200': { description: OK }
-  /send_code:
-    post:
-      summary: 发送验证码
-      responses:
-        '200': { description: OK }
-  /profile/{user_id}:
-    get:
-      summary: 用户资料
+      summary: 用户进度数据
+      security: [ { bearerAuth: [ ] } ]
       parameters:
-        - in: path
-          name: user_id
+        - in: query
+          name: data_type
           required: true
+          schema: { type: string, enum: [ task_progress, ability_trend ] }
+        - in: query
+          name: goal_id
+          required: false
           schema: { type: string }
       responses:
-        '200': { description: OK }
-  /logout:
-    post:
-      summary: 退出登录
-      security:
-        - bearerAuth: []
-      responses:
-        '200': { description: OK }
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-  responses:
-    Error:
-      description: Error
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              code: { type: integer }
-              error: { type: string }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserProgressResponse' } } } }

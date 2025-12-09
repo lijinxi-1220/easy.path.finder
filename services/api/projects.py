@@ -1,9 +1,8 @@
-from django.http import JsonResponse
-from core.utils import ok
-from core.validators import validate_query
-from core.exceptions import BusinessError
 from django.views.decorators.http import require_GET
-from services import redis_client
+
+from core.exceptions import ErrorCode
+from core.utils import ok, err
+from core.validators import validate_query
 from services.repo import ServicesRepo
 
 
@@ -16,8 +15,6 @@ from services.repo import ServicesRepo
     "sort_order_default": "asc",
 })
 def projects(request):
-    if not redis_client.redis:
-        raise BusinessError(500, "redis_not_configured", 500)
     pt = (request.GET.get("project_type") or "").lower()
     v = getattr(request, "validated", {})
     page = v["page"]
@@ -37,7 +34,7 @@ def projects(request):
                 "method": d.get("method", ""),
             })
     if not items:
-        raise BusinessError(6005, "no_projects", 404)
+        return err(ErrorCode.NO_PROJECTS)
     items.sort(key=lambda x: x.get(sort_by) or "", reverse=(sort_order == "desc"))
     total = len(items)
     start = max(0, (page - 1) * page_size)

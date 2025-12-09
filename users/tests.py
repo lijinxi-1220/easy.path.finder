@@ -1,33 +1,14 @@
 import json
 from django.test import SimpleTestCase, Client
-from users import redis_client
 
-
-class FakeRedis:
-    def __init__(self):
-        self.kv = {}
-        self.hash = {}
-    def set(self, k, v, ex=None):
-        self.kv[k] = v
-        return True
-    def get(self, k):
-        return self.kv.get(k)
-    def exists(self, k):
-        return 1 if k in self.kv else 0
-    def hset(self, k, mapping=None, **kwargs):
-        m = mapping or kwargs
-        self.hash.setdefault(k, {})
-        self.hash[k].update(m)
-        return True
-    def hgetall(self, k):
-        return self.hash.get(k, {})
-    def delete(self, k):
-        return 1 if self.kv.pop(k, None) is not None else 0
+import core
+from core.testing.fake_redis import FakeRedis
+from users.repo import UsersRepo
 
 
 class UserApiTests(SimpleTestCase):
     def setUp(self):
-        redis_client.redis = FakeRedis()
+        core.redis_client = FakeRedis()
         self.client = Client()
 
     def test_register_login_profile_logout(self):
@@ -93,7 +74,7 @@ class UserApiTests(SimpleTestCase):
         )
         self.assertEqual(r.status_code, 200)
         # read code from fake storage
-        code = redis_client.redis.get("otp:email:b@x.com")
+        code = UsersRepo.client().get("otp:email:b@x.com")
         # login via code
         r = self.client.post(
             "/login/code",

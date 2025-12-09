@@ -3,8 +3,8 @@ from django.views.decorators.http import require_GET
 from users.api.auth import auth_user_id
 from resumes import redis_client as resume_rc
 import json
-from core.utils import ok
-from core.exceptions import BusinessError
+from core.utils import ok, err
+from core.exceptions import BusinessError, ErrorCode
 
 
 @require_GET
@@ -12,14 +12,13 @@ def resume_guide(request):
     uid = auth_user_id(request)
     resume_id = request.GET.get("resume_id") or ""
     if not uid:
-        raise BusinessError(1002, "missing_params", 400)
+        return err(ErrorCode.MISSING_PARAMS)
     r = resume_rc.redis.hgetall(f"resume:id:{resume_id}") if resume_rc.redis else {}
     if not r or r.get("user_id") != uid:
-        raise BusinessError(2004, "resume_not_found", 404)
-    parsed = {}
+        return err(ErrorCode.RESUME_NOT_FOUND)
     try:
         parsed = json.loads(r.get("parsed_content") or "{}")
-    except Exception:
+    except json.JSONDecodeError:
         parsed = {}
     required_fields = ["skills", "education", "experience", "projects"]
     missing = [f for f in required_fields if not parsed.get(f)]

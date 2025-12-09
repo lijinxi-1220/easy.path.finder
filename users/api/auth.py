@@ -1,9 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import secrets
 import jwt
 from django.conf import settings
 from .. import config
-from .. import redis_client
+from ..repo import UsersRepo
+
+type JWTError = jwt.ExpiredSignatureError | jwt.InvalidTokenError | jwt.InvalidSignatureError
 
 
 def issue_jwt(user_id, role, username):
@@ -16,8 +18,8 @@ def issue_jwt(user_id, role, username):
         "username": username,
         "role": role,
         "jti": jti,
-        "exp": datetime.utcnow() + timedelta(seconds=exp_seconds),
-        "iat": datetime.utcnow(),
+        "exp": datetime.now(UTC) + timedelta(seconds=exp_seconds),
+        "iat": datetime.now(UTC),
     }
     return jwt.encode(payload, secret, algorithm="HS256")
 
@@ -30,12 +32,10 @@ def auth_user_id(request):
     secret = config.JWT_SECRET or settings.SECRET_KEY
     try:
         payload = jwt.decode(token, secret, algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
-        return None
-    except Exception:
+    except JWTError:
         return None
     jti = payload.get("jti")
-    if redis_client.redis and jti and redis_client.redis.get(f"jwt:blacklist:{jti}"):
+    if UsersRepo.client() and jti and UsersRepo.jwt_blacklist_exists(jti):
         return None
     return payload.get("sub") or payload.get("user_id")
 
@@ -44,15 +44,13 @@ def blacklist_token(token):
     secret = config.JWT_SECRET or settings.SECRET_KEY
     try:
         payload = jwt.decode(token, secret, algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
-        return False, "token_expired"
-    except Exception:
-        return False, "invalid_token"
+    except JWTError:
+        return False, "toke expired or invalid"
     jti = payload.get("jti")
     exp = payload.get("exp")
-    if redis_client.redis and jti and exp:
-        ttl = max(0, int(exp - datetime.utcnow().timestamp()))
-        redis_client.redis.set(f"jwt:blacklist:{jti}", 1, ex=ttl)
+    if UsersRepo.client() and jti and exp:
+        ttl = max(0, int(exp - datetime.now(UTC).timestamp()))
+        UsersRepo.jwt_blacklist_add(jti, ttl)
     return True, None
 
 
@@ -61,7 +59,7 @@ def token_role(token):
     try:
         payload = jwt.decode(token, secret, algorithms=["HS256"])
         return payload.get("role")
-    except Exception:
+    except JWTError:
         return None
 
 

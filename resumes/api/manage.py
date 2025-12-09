@@ -14,7 +14,8 @@ def manage(request):
     if request.method == "GET":
         user_id = resolve_user_id(request, request.GET.get("user_id") or "")
         if not user_id:
-            return err(1006, "permission_denied", status=403)
+            from core.exceptions import ErrorCode
+            return err(ErrorCode.PERMISSION_DENIED)
         items = []
         for r in ResumeRepo.list_by_user(user_id):
             if r:
@@ -36,7 +37,8 @@ def manage(request):
         is_default = body.get("is_default")
         user_id = resolve_user_id(request, provided_uid)
         if not user_id:
-            return err(1006, "permission_denied", status=403)
+            from core.exceptions import ErrorCode
+            return err(ErrorCode.PERMISSION_DENIED)
         rkey = ResumeRepo.id_key(resume_id)
         r = ResumeRepo.get(resume_id)
         if not r or r.get("user_id") != user_id:
@@ -64,7 +66,8 @@ def manage(request):
         resume_id = body.get("resume_id")
         user_id = resolve_user_id(request, provided_uid)
         if not user_id:
-            return err(1006, "permission_denied", status=403)
+            from core.exceptions import ErrorCode
+            return err(ErrorCode.PERMISSION_DENIED)
         r = ResumeRepo.get(resume_id)
         if not r or r.get("user_id") != user_id:
             return err(2004, "resume_not_found", status=404)

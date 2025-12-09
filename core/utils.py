@@ -1,19 +1,25 @@
 import uuid
 from django.http import JsonResponse
 
+from core.config import is_debug
+from core.exceptions import BusinessError
+
 
 def ok(data, status=200):
     return JsonResponse(data, status=status)
 
 
-def err(code, message, status=400):
-    return JsonResponse({"code": code, "error": message}, status=status)
+def err(error: BusinessError):
+    if is_debug():
+        return JsonResponse({"code": error.code, "error": error.message, "stack": error.__traceback__},
+                            status=error.status)
+    return JsonResponse({"code": error.code, "error": error.message}, status=error.status)
 
 
 def parse_int(value, default):
     try:
         return int(value)
-    except Exception:
+    except ValueError:
         return default
 
 
@@ -32,4 +38,3 @@ def apply_pagination(items, page, page_size):
 
 def new_request_id():
     return str(uuid.uuid4())
-

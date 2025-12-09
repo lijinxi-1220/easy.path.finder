@@ -39,6 +39,7 @@ def validate_query(config):
     }
     Backward compatibility keys: page_default, page_size_default, sort_by_default, sort_order_default, sort_by_allowed
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
@@ -51,7 +52,8 @@ def validate_query(config):
                     "page": {"type": "int", "default": config.get("page_default", 1), "min": 1},
                     "page_size": {"type": "int", "default": config.get("page_size_default", 20), "min": 1},
                     "sort_by": {"type": "str", "default": config.get("sort_by_default")},
-                    "sort_order": {"type": "str", "default": config.get("sort_order_default", "asc"), "enum": {"asc", "desc"}},
+                    "sort_order": {"type": "str", "default": config.get("sort_order_default", "asc"),
+                                   "enum": {"asc", "desc"}},
                 }
                 allowed = config.get("sort_by_allowed")
                 if allowed:
@@ -76,7 +78,9 @@ def validate_query(config):
                 validated[name] = val
             request.validated = validated
             return view_func(request, *args, **kwargs)
+
         return _wrapped
+
     return decorator
 
 
@@ -91,6 +95,7 @@ def validate_body(config):
       }
     }
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
@@ -121,5 +126,7 @@ def validate_body(config):
                 validated[name] = val
             request.validated_body = validated
             return view_func(request, *args, **kwargs)
+
         return _wrapped
+
     return decorator

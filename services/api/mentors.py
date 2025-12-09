@@ -1,9 +1,8 @@
-from django.http import JsonResponse
-from core.utils import ok
-from core.validators import validate_query
-from core.exceptions import BusinessError
 from django.views.decorators.http import require_GET
-from services import redis_client
+
+from core.exceptions import BusinessError
+from core.utils import ok, err
+from core.validators import validate_query
 from services.repo import ServicesRepo
 
 
@@ -16,8 +15,6 @@ from services.repo import ServicesRepo
     "sort_order_default": "asc",
 })
 def mentors(request):
-    if not redis_client.redis:
-        raise BusinessError(500, "redis_not_configured", 500)
     field = (request.GET.get("field") or "").lower()
     v = getattr(request, "validated", {})
     page = v["page"]
@@ -26,7 +23,7 @@ def mentors(request):
     sort_order = v["sort_order"]
     ids = ServicesRepo.get_mentor_ids(field)
     if not ids:
-        raise BusinessError(6002, "no_mentors", 404)
+        return err(BusinessError(6002, "no_mentors", 404))
     start = max(0, (page - 1) * page_size)
     end = start + page_size
     items = []
@@ -39,12 +36,12 @@ def mentors(request):
             "fee": d.get("fee", ""),
             "id": mid,
         })
-    def keyfunc(x):
+    def _func(x):
         if sort_by in ("years", "fee"):
             try:
                 return int(x.get(sort_by) or 0)
-            except Exception:
+            except ValueError:
                 return 0
         return x.get(sort_by) or ""
-    items.sort(key=keyfunc, reverse=(sort_order == "desc"))
+    items.sort(key=_func, reverse=(sort_order == "desc"))
     return ok({"mentors": items, "meta": {"total": len(ids), "page": page, "page_size": page_size}})

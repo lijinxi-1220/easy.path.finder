@@ -8,7 +8,6 @@ from plans.api.adjust import adjust
 
 urlpatterns = [
     path('plan/goals', goals),
-    path('plan/tasks/generate', tasks_generate),
     path('plan/tasks', tasks_manage),
     path('plan/doc', plan_doc),
     path('plan/adjust', adjust),

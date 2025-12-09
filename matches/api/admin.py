@@ -1,9 +1,12 @@
 import json
-from django.http import JsonResponse
+
 from django.views.decorators.csrf import csrf_exempt
-from .. import redis_client
-from users.api.auth import token_role
+from django.views.decorators.http import require_POST
+
+from core.exceptions import ErrorCode
 from core.utils import ok, err
+from users.api.auth import token_role
+from ..repo import MatchesRepo
 
 
 def _require_admin(request):
@@ -13,17 +16,14 @@ def _require_admin(request):
 
 
 @csrf_exempt
+@require_POST
 def import_job_profiles(request):
-    if request.method != "POST":
-        return err(405, "method_not_allowed", status=405)
-    if not redis_client.redis:
-        return err(500, "redis_not_configured", status=500)
     if not _require_admin(request):
-        return err(1006, "permission_denied", status=403)
+        return err(ErrorCode.PERMISSION_DENIED)
     try:
         items = json.loads(request.body.decode("utf-8"))
-    except Exception:
-        return err(1002, "invalid_json")
+    except json.JSONDecodeError:
+        return err(ErrorCode.REQUEST_ERROR)
     ids = []
     for it in items if isinstance(items, list) else []:
         pid = it.get("job_profile_id") or it.get("id")
@@ -31,7 +31,7 @@ def import_job_profiles(request):
         ind = (it.get("industry") or "").lower()
         if not pid or not jt:
             continue
-        redis_client.redis.hset(f"job:profile:{pid}", mapping={
+        MatchesRepo.set_job_profile(pid, mapping={
             "job_profile_id": pid,
             "job_title": jt,
             "company": it.get("company", ""),
@@ -39,43 +39,36 @@ def import_job_profiles(request):
             "required_experience": it.get("required_experience", ""),
             "industry": it.get("industry", ""),
         })
-        redis_client.redis.set(f"job:profile:index:{jt.lower()}:{ind}", pid)
+        MatchesRepo.set_job_index(jt.lower(), ind, pid)
         ids.append(pid)
-    cur = redis_client.redis.get("job:profile:list") or ""
-    existing = [x for x in cur.split(",") if x]
-    merged = list(dict.fromkeys(existing + ids))
-    redis_client.redis.set("job:profile:list", ",".join(merged))
+    for pid in ids:
+        MatchesRepo.add_job_to_list(pid)
     return ok({"imported": len(ids)})
 
 
 @csrf_exempt
+@require_POST
 def import_schools(request):
-    if request.method != "POST":
-        return err(405, "method_not_allowed", status=405)
-    if not redis_client.redis:
-        return err(500, "redis_not_configured", status=500)
     if not _require_admin(request):
-        return err(1006, "permission_denied", status=403)
+        return err(ErrorCode.PERMISSION_DENIED)
     try:
         items = json.loads(request.body.decode("utf-8"))
-    except Exception:
-        return err(1002, "invalid_json")
+    except json.JSONDecodeError:
+        return err(ErrorCode.REQUEST_ERROR)
     ids = []
     for it in items if isinstance(items, list) else []:
         sid = it.get("school_id") or it.get("id")
         if not sid:
             continue
-        redis_client.redis.hset(f"school:id:{sid}", mapping={
+        MatchesRepo.set_school(sid, mapping={
             "school_id": sid,
             "school_name": it.get("school_name", ""),
             "major": it.get("major", ""),
             "rank": it.get("rank", ""),
         })
         slug = it.get("slug") or it.get("school_name", "").lower().replace(" ", "-")
-        redis_client.redis.set(f"school:index:{slug}", sid)
+        MatchesRepo.set_school_index(slug, sid)
         ids.append(sid)
-    cur = redis_client.redis.get("school:list") or ""
-    existing = [x for x in cur.split(",") if x]
-    merged = list(dict.fromkeys(existing + ids))
-    redis_client.redis.set("school:list", ",".join(merged))
+    for sid in ids:
+        MatchesRepo.add_school_to_list(sid)
     return ok({"imported": len(ids)})

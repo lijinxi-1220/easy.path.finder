@@ -14,17 +14,19 @@
 
 ## 接口
 - 隐私设置 `PUT /user/privacy`
-  - 请求：`privacy_settings`（JSON）
-  - 响应：当前设置与状态
-  - 错误：`1005` 用户不存在
+  - 请求体：`privacy_settings`（对象）
+  - 响应字段：`privacy_settings|status`
+  - 错误：`1003` user not found（用户不存在）
 - 历史查询 `GET /user/history`
-  - 参数：`time_range`（`startISO,endISO` 可选）
-  - 响应：`history` 列表（操作类型、内容、时间）
-  - 错误：`1005` 用户不存在或无历史
+  - 请求参数：`time_range`（`startISO,endISO` 可选）
+  - 响应字段：`history` 列表项含 `action_type|action_content|timestamp`
+  - 错误：`1009` user not found or no history（用户不存在或无历史）
 - 进度数据 `GET /user/progress`
-  - 参数：`data_type`(`task_progress|ability_trend`)、可选 `goal_id`
-  - 响应：图表数据；`task_progress` 返回 `total/completed/rate`
-  - 错误：`4005` 无规划数据
+  - 请求参数：`data_type`(`task_progress|ability_trend`)、可选 `goal_id`
+  - 响应字段：
+    - `task_progress` 返回 `{ total|completed|rate }`
+    - `ability_trend` 返回数组，如 `[{ week: "W1", score: 65 }, ... ]`
+  - 错误：`1010` no planned data（无规划数据）、`1011` unsupported data type（数据类型不支持）
 
 ## 示例
 ```bash

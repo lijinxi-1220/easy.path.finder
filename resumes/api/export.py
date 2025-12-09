@@ -19,7 +19,8 @@ def export(request):
     export_format = (request.POST.get("export_format") or "").lower()
     user_id = resolve_user_id(request, provided_uid)
     if not user_id:
-        return err(1006, "permission_denied", status=403)
+        from core.exceptions import ErrorCode
+        return err(ErrorCode.PERMISSION_DENIED)
     r = redis_client.redis.hgetall(f"resume:id:{resume_id}")
     if not r or r.get("user_id") != user_id:
         return err(2004, "resume_not_found", status=404)

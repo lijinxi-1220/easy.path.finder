@@ -3,6 +3,9 @@ from . import redis_client
 
 class ChatRepo:
     @staticmethod
+    def client():
+        return redis_client.redis
+    @staticmethod
     def session_list_key(uid):
         return f"chat:session:list:{uid}"
 
@@ -19,6 +22,11 @@ class ChatRepo:
         return f"chat:message:{mid}"
 
     @staticmethod
+    def list_session_ids(uid):
+        cur = redis_client.redis.get(ChatRepo.session_list_key(uid)) or ""
+        return [x for x in cur.split(",") if x]
+
+    @staticmethod
     def add_session(uid, cid, scene, created_at):
         redis_client.redis.hset(ChatRepo.session_key(cid), mapping={
             "chat_id": cid,
@@ -27,11 +35,7 @@ class ChatRepo:
             "created_at": created_at,
             "last_ts": created_at,
         })
-        cur = redis_client.redis.get(ChatRepo.session_list_key(uid)) or ""
-        ids = [x for x in cur.split(",") if x]
-        if cid not in ids:
-            ids.append(cid)
-        redis_client.redis.set(ChatRepo.session_list_key(uid), ",".join(ids))
+        ChatRepo.ensure_session_list_contains(uid, cid)
 
     @staticmethod
     def update_session_last_ts(cid, ts):
@@ -40,6 +44,10 @@ class ChatRepo:
     @staticmethod
     def get_session(cid):
         return redis_client.redis.hgetall(ChatRepo.session_key(cid)) if redis_client.redis else {}
+
+    @staticmethod
+    def get_message(mid):
+        return redis_client.redis.hgetall(ChatRepo.msg_key(mid)) if redis_client.redis else {}
 
     @staticmethod
     def append_message(cid, mid, role, content_field, content, ts):
@@ -59,3 +67,9 @@ class ChatRepo:
         mids = (redis_client.redis.get(ChatRepo.msg_list_key(cid)) or "").split(",")
         return [m for m in mids if m]
 
+    @staticmethod
+    def ensure_session_list_contains(uid, cid):
+        cur = redis_client.redis.get(ChatRepo.session_list_key(uid)) or ""
+        ids = [x for x in cur.split(",") if x]
+        if cid not in ids:
+            redis_client.redis.set(ChatRepo.session_list_key(uid), ",".join(ids + [cid]))
