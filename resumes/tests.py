@@ -2,8 +2,6 @@ import json
 from django.test import SimpleTestCase, Client
 from django.core.files.uploadedfile import SimpleUploadedFile
 from core import redis_client as user_rc
-from resumes import redis_client as resume_rc
-from core.testing.fake_redis import FakeRedis
 
 
 
@@ -11,9 +9,6 @@ from core.testing.fake_redis import FakeRedis
 class ResumeApiTests(SimpleTestCase):
     def setUp(self):
         # share fake redis between user & resume for simplicity
-        fake = FakeRedis()
-        user_rc.redis_client = fake
-        resume_rc.redis = fake
         self.client = Client()
 
         # register a user and login to get token

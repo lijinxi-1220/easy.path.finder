@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 
 from core.exceptions import ErrorCode
 from core.utils import ok, err
-from resumes import redis_client as resume_rc
+from resumes.repo import ResumeRepo
 from users.api.auth import auth_user_id, token_role
 from ..repo import MatchesRepo
 
@@ -34,7 +34,7 @@ def match_analysis(request):
         user_id = user_token_uid
     if not user_id or not resume_id or not target_type:
         return err(ErrorCode.USER_INFO_INCOMPLETE)
-    r = resume_rc.redis.hgetall(f"resume:id:{resume_id}") if resume_rc.redis else {}
+    r = ResumeRepo.get(resume_id)
     if not r or r.get("user_id") != user_id:
         return err(ErrorCode.USER_INFO_INCOMPLETE)
     if target_type == "job":

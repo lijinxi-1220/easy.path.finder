@@ -4,7 +4,7 @@ from django.views.decorators.http import require_GET
 
 from core.exceptions import ErrorCode
 from core.utils import ok, err
-from resumes import redis_client as resume_rc
+from resumes.repo import ResumeRepo
 from users.api.auth import auth_user_id
 from ..repo import MatchesRepo
 
@@ -18,8 +18,8 @@ def recommend(request):
         return err(ErrorCode.USER_INFO_INCOMPLETE)
 
     resume_skills = []
-    if resume_id and resume_rc.redis:
-        r = resume_rc.redis.hgetall(f"resume:id:{resume_id}") or {}
+    if resume_id :
+        r = ResumeRepo.get(resume_id) or {}
         if r.get("user_id") != uid:
             return err(ErrorCode.USER_INFO_INCOMPLETE)
         try:

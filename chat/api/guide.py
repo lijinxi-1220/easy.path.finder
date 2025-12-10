@@ -1,7 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+
+from resumes.repo import ResumeRepo
 from users.api.auth import auth_user_id
-from resumes import redis_client as resume_rc
 import json
 from core.utils import ok, err
 from core.exceptions import BusinessError, ErrorCode
@@ -13,7 +14,7 @@ def resume_guide(request):
     resume_id = request.GET.get("resume_id") or ""
     if not uid:
         return err(ErrorCode.MISSING_PARAMS)
-    r = resume_rc.redis.hgetall(f"resume:id:{resume_id}") if resume_rc.redis else {}
+    r = ResumeRepo.get(resume_id)
     if not r or r.get("user_id") != uid:
         return err(ErrorCode.RESUME_NOT_FOUND)
     try:
