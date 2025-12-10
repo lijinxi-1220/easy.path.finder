@@ -1,28 +1,26 @@
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from .. import redis_client
-from users.api.auth import auth_user_id, token_role, resolve_user_id
-from core.utils import ok, err
 import json
+
+from django.views.decorators.http import require_GET
+
+from core.exceptions import ErrorCode
+from core.utils import ok, err
+from users.api.auth import resolve_user_id
+from ..repo import ResumeRepo
 
 
 @require_GET
 def optimize(request):
-    if not redis_client.redis:
-        return err(500, "redis_not_configured", status=500)
     provided_uid = request.GET.get("user_id") or ""
     user_id = resolve_user_id(request, provided_uid)
     if not user_id:
-        from core.exceptions import ErrorCode
         return err(ErrorCode.PERMISSION_DENIED)
     resume_id = request.GET.get("resume_id") or ""
     target_job = request.GET.get("target_job") or ""
     if not user_id or not resume_id:
-        from core.exceptions import ErrorCode
         return err(ErrorCode.MISSING_PARAMS)
-    r = redis_client.redis.hgetall(f"resume:id:{resume_id}")
+    r = ResumeRepo.get(resume_id)
     if not r or r.get("user_id") != user_id:
-        return err(2004, "resume_not_found", status=404)
+        return err(ErrorCode.RESUME_NOT_FOUND)
     parsed = json.loads(r.get("parsed_content") or "{}")
     suggestions = [
         {"title": "增强量化成果", "detail": "用数据描述业绩，例如提升率、节省成本"},

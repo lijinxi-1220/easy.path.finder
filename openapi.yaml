@@ -130,6 +130,32 @@ components:
             created_at: { type: string }
             parsed_content: { type: object }
             parse_status: { type: string }
+    ResumeSingleResponse:
+      type: object
+      properties:
+        resume:
+          type: object
+          properties:
+            resume_id: { type: string }
+            resume_name: { type: string }
+            is_default: { type: string }
+            created_at: { type: string }
+            parsed_content: { type: object }
+            parse_status: { type: string }
+    ResumeManageRequest:
+      type: object
+      properties:
+        action: { type: string, enum: [ list, get, update, delete ] }
+        user_id: { type: string }
+        resume_id: { type: string }
+        resume_name: { type: string }
+        is_default: { type: boolean }
+      required: [ action ]
+    ResumeManageResponse:
+      oneOf:
+        - $ref: '#/components/schemas/ResumeSummary'
+        - $ref: '#/components/schemas/ResumeSingleResponse'
+        - $ref: '#/components/schemas/DeletedResponse'
     DeletedResponse:
       type: object
       properties:
@@ -542,39 +568,16 @@ paths:
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/OptimizationResponse' } } } }
   /resume/manage:
-    get:
-      summary: 简历列表
-      security: [ { bearerAuth: [ ] } ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeSummary' } } } }
-    put:
-      summary: 更新简历条目
-      security: [ { bearerAuth: [ ] } ]
+    post:
+      summary: 简历管理（action 路由）
+      security: [ { bearerAuth: [] } ]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              properties:
-                resume_id: { type: string }
-                resume_name: { type: string }
-                is_default: { type: boolean }
+            schema: { $ref: '#/components/schemas/ResumeManageRequest' }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeManageUpdateResponse' } } } }
-    delete:
-      summary: 删除简历条目
-      security: [ { bearerAuth: [ ] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                resume_id: { type: string }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/DeletedResponse' } } } }
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeManageResponse' } } } }
   /resume/export:
     post:
       summary: 简历导出

@@ -1,13 +1,15 @@
 import json
 import uuid
 from datetime import datetime
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+
 from django.core.files.uploadedfile import UploadedFile
-from .. import redis_client
-from .. import config as rconfig
-from users.api.auth import auth_user_id, token_role, resolve_user_id
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
 from core.utils import ok, err
+from users.api.auth import resolve_user_id
+from .. import config as rconfig
+from ..repo import ResumeRepo
 
 
 def _file_ext(name: str):
@@ -20,12 +22,8 @@ def _file_ext(name: str):
 
 
 @csrf_exempt
+@require_POST
 def upload_parse(request):
-    if request.method != "POST":
-        return err(405, "method_not_allowed", status=405)
-    if not redis_client.redis:
-        return err(500, "redis_not_configured", status=500)
-
     provided_uid = request.POST.get("user_id") or (request.GET.get("user_id") or "")
     user_id = resolve_user_id(request, provided_uid)
     if not user_id:
@@ -67,8 +65,8 @@ def upload_parse(request):
     })
     parse_status = "parsed"
 
-    redis_client.redis.hset(
-        f"resume:id:{resume_id}",
+    ResumeRepo.create(
+        resume_id,
         mapping={
             "resume_id": resume_id,
             "user_id": user_id,
@@ -80,12 +78,7 @@ def upload_parse(request):
             "is_default": "0",
         },
     )
-    # 列表维护
-    key_list = f"resume:list:{user_id}"
-    cur = redis_client.redis.get(key_list) or ""
-    items = [x for x in cur.split(",") if x]
-    items.append(resume_id)
-    redis_client.redis.set(key_list, ",".join(items))
+    ResumeRepo.add_to_user(user_id, resume_id)
 
     return ok({
         "resume_id": resume_id,

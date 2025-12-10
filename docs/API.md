@@ -36,10 +36,11 @@
 - GET `/resume/optimize`
   - 参数：`resume_id|string`、`target_job|string?`
   - 响应：`optimization_suggestions|array`
-- GET/PUT/DELETE `/resume/manage`
-  - GET 响应：`resumes|array<{ resume_id, resume_name, is_default }>`
-  - PUT 请求体：`resume_id|string`、`resume_name|string?`、`is_default|bool?`；响应 `resume|object`
-  - DELETE 请求体：`resume_id|string`；响应 `{ deleted: true }`
+- POST `/resume/manage`（action 路由）
+  - `action=list`：响应 `resumes|array<{ resume_id, resume_name, is_default }>`
+  - `action=get`：请求体：`resume_id|string`；响应 `resume|object`
+  - `action=update`：请求体：`resume_id|string|resume_name|string?|is_default|bool?`；响应 `resume|object`
+  - `action=delete`：请求体：`resume_id|string`；响应 `{ deleted: true }`
 - POST `/resume/export`（multipart）
   - 表单：`resume_id|string`、`template_id|enum(basic|modern|compact)`、`export_format|enum(PDF|DOCX)`
   - 响应：`export_url|string`、`file_name|string`

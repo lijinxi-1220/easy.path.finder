@@ -14,7 +14,7 @@
   - `POST /resume/upload` → `resumes/api/upload.py:14`
   - `GET  /resume/score` → `resumes/api/score.py:8`
   - `GET  /resume/optimize` → `resumes/api/optimize.py:8`
-  - `GET/PUT/DELETE /resume/manage` → `resumes/api/manage.py:8`
+- `POST /resume/manage`（action 路由） → `resumes/api/manage.py:8`
   - `POST /resume/export` → `resumes/api/export.py:8`
 
 ## 数据键约定
@@ -26,7 +26,7 @@
 ### 上传解析 `POST /resume/upload`
 表单参数：`resume_name`、`resume_file`(multipart)、可选 `skills`（JSON 数组或逗号分隔）；用户身份从 JWT 的 `sub` 解析
 响应：`resume_id`、`file_url`、`parsed_content`、`parse_status`
-错误码：`2001` 格式不支持、`2002` 解析失败、`2003` 文件过大、`1006` 权限不足
+错误码：`2001` 格式不支持、`2002` 解析失败、`2003` 文件过大、`1008` 权限不足
 
 示例：
 ```bash
@@ -40,7 +40,7 @@ curl -s -X POST http://localhost:8000/resume/upload \
 ### 评分 `GET /resume/score`
 参数：`resume_id`；用户身份从 JWT 的 `sub` 解析
 响应：`overall_score`、`detail_scores`、`generated_date`
-错误码：`2004` 简历不存在、`1006` 权限不足
+错误码：`2004` 简历不存在、`1008` 权限不足
 
 示例：
 ```bash
@@ -59,24 +59,27 @@ curl -s "http://localhost:8000/resume/optimize?resume_id=$RID&target_job=Backend
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### 管理 `GET/PUT/DELETE /resume/manage`
-- GET：返回当前用户的简历列表（`resume_id`、`resume_name`、`is_default`）
-- PUT 体：`resume_id`、可选 `resume_name`、`is_default`
-- DELETE 体：`resume_id`
-错误码：`2004` 简历不存在、`2005` 默认简历不可删除、`1006` 权限不足
+### 管理 `POST /resume/manage`（action 路由）
+- `action=list`：返回当前用户的简历列表（`resume_id|resume_name|is_default`）
+- `action=get`：体含 `resume_id`，返回单条 `resume` 对象
+- `action=update`：体含 `resume_id`，可选 `resume_name|is_default`
+- `action=delete`：体含 `resume_id`
+错误码：`2004` 简历不存在、`2005` 默认简历不可删除、`1008` 权限不足
 
 示例：
 ```bash
-# 列表
-curl -s "http://localhost:8000/resume/manage" -H "Authorization: Bearer $TOKEN"
-# 设为默认
-curl -s -X PUT http://localhost:8000/resume/manage \
+# 列表（POST action=list）
+curl -s -X POST http://localhost:8000/resume/manage \
   -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
-  -d '{"resume_id":"'$RID'","is_default":true}'
-# 删除
-curl -s -X DELETE http://localhost:8000/resume/manage \
+  -d '{"action":"list"}'
+# 设为默认（POST action=update）
+curl -s -X POST http://localhost:8000/resume/manage \
   -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
-  -d '{"resume_id":"'$RID'"}'
+  -d '{"action":"update","resume_id":"'$RID'","is_default":true}'
+# 删除（POST action=delete）
+curl -s -X POST http://localhost:8000/resume/manage \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"action":"delete","resume_id":"'$RID'"}'
 ```
 
 ### 模板导出 `POST /resume/export`

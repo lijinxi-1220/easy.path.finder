@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, UTC
 import secrets
 import jwt
 from django.conf import settings
-from .. import config
+from core import config
 from ..repo import UsersRepo
 
 type JWTError = jwt.ExpiredSignatureError | jwt.InvalidTokenError | jwt.InvalidSignatureError

@@ -1,5 +1,3 @@
-RESUME_REDIS_REST_URL = ""
-RESUME_REDIS_REST_TOKEN = ""
 MAX_FILE_MB = 5
 ALLOWED_EXPORT_TEMPLATES = {"basic", "modern", "compact"}
 

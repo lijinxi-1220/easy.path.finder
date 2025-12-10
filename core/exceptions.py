@@ -28,5 +28,5 @@ class ErrorCode:
     TARGET_NOT_FOUND = BusinessError(1019, "target not found")
     SCHOOL_NOT_FOUND = BusinessError(1020, "school not found")
     RESUME_NOT_FOUND = BusinessError(1021, "resume_not_found")
-    SESSION_NOT_FOUND = BusinessError(5001, "session_not_found")
-
+    SESSION_NOT_FOUND = BusinessError(1022, "session_not_found")
+    DEFAULT_NOT_DELETABLE = BusinessError(1023, "default not deletable")

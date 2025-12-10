@@ -67,6 +67,22 @@ curl -s "http://localhost:8000/resume/score?resume_id=$RID" -H "Authorization: B
 curl -s "http://localhost:8000/resume/optimize?resume_id=$RID&target_job=Backend" -H "Authorization: Bearer $TOKEN"
 ```
 
+# 简历管理（POST action）
+```bash
+# 列表
+curl -s -X POST http://localhost:8000/resume/manage \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"action":"list"}'
+# 设为默认
+curl -s -X POST http://localhost:8000/resume/manage \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"action":"update","resume_id":"'$RID'","is_default":true}'
+# 删除
+curl -s -X POST http://localhost:8000/resume/manage \
+  -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" \
+  -d '{"action":"delete","resume_id":"'$RID'"}'
+```
+
 ### 4. 规划：目标与任务（含 POST action）
 ```bash
 # 创建目标
