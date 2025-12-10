@@ -7,7 +7,6 @@
 - 错误：统一返回 `{ code, error }`；服务端使用 `BusinessError(code, message, status)`。
 - 分页：`page`（默认 1）、`page_size`（默认 20）；响应含 `meta.total|page|page_size`。
 - 速率限制与幂等：登录 10/min（按 IP）、验证码发送 5/min（按 IP）+ 60s 用户节流；咨询 3/h（按用户）；注册/订阅支持 `Idempotency-Key`。
-- 校验：`validate_query`/`validate_body` 统一参数校验；非法返回 `{ code: 1002, error: 'invalid_param|invalid_json' }`。
 
 ## 模块与仓储层
 - users：用户认证与资料；仓储 `users/repo.py`
@@ -169,7 +168,3 @@ curl -s -X PUT http://localhost:8000/user/privacy \
 curl -s "http://localhost:8000/user/history?page=1&page_size=10" -H "Authorization: Bearer $TOKEN"
 curl -s "http://localhost:8000/user/progress?data_type=task_progress&goal_id=$GID" -H "Authorization: Bearer $TOKEN"
 ```
-
-## 说明
-- 文档字段详见 `docs/API.md` 与各模块 README；`openapi.yaml` 可用于生成前端 SDK 雏形。
-- 本地/CI 测试默认使用共享 `FakeRedis`；生产需配置 Upstash Redis 与 JWT 密钥。
