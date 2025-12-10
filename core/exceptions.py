@@ -30,3 +30,6 @@ class ErrorCode:
     RESUME_NOT_FOUND = BusinessError(1021, "resume_not_found")
     SESSION_NOT_FOUND = BusinessError(1022, "session_not_found")
     DEFAULT_NOT_DELETABLE = BusinessError(1023, "default not deletable")
+    FORMAT_NOT_SUPPORTED = BusinessError(1024, "format_not_supported")
+    FILE_TOO_LARGE = BusinessError(1025, "file_too_large")
+    PARSE_FAILED = BusinessError(1026, "parse_failed")

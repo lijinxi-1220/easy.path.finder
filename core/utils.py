@@ -6,13 +6,14 @@ from core.exceptions import BusinessError
 
 
 def ok(data, status=200):
-    return JsonResponse(data, status=status)
+    return JsonResponse(data, status=status, json_dumps_params={'ensure_ascii': False})
 
 
 def err(error: BusinessError):
+    print(error.__traceback__)
     if is_debug():
         return JsonResponse({"code": error.code, "error": error.message, "stack": error.__traceback__},
-                            status=error.status)
+                            status=error.status, json_dumps_params={'ensure_ascii': False})
     return JsonResponse({"code": error.code, "error": error.message}, status=error.status)
 
 

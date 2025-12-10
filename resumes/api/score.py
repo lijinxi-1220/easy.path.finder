@@ -27,8 +27,9 @@ def score(request):
     r = ResumeRepo.get(resume_id)
     if not r or r.get("user_id") != user_id:
         return err(ErrorCode.RESUME_NOT_FOUND)
-    parsed = json.loads(r.get("parsed_content") or "{}")
-    size = int(parsed.get("size", 1000))
+    # parsed = json.loads(r.get("parsed_content") or "{}")
+    # size = int(parsed.get("size", 1000))
+    size = 0
     # 简单评分：根据大小给出分数模拟
     overall = max(50, min(95, 60 + size // 5000))
     details = {

@@ -48,11 +48,11 @@ class PlansRepo:
 
     @staticmethod
     def update_goal(goal_id, mapping):
-        redis_client.hset(PlansRepo.goal_id_key(goal_id), mapping=mapping)
+        redis_client.hset(PlansRepo.goal_id_key(goal_id), values=mapping)
 
     @staticmethod
     def create_goal(goal_id, mapping):
-        redis_client.hset(PlansRepo.goal_id_key(goal_id), mapping=mapping)
+        redis_client.hset(PlansRepo.goal_id_key(goal_id), values=mapping)
 
     @staticmethod
     def get_task(task_id):
@@ -74,8 +74,8 @@ class PlansRepo:
 
     @staticmethod
     def update_task(task_id, mapping):
-        redis_client.hset(PlansRepo.task_id_key(task_id), mapping=mapping)
+        redis_client.hset(PlansRepo.task_id_key(task_id), values=mapping)
 
     @staticmethod
     def create_task(task_id, mapping):
-        redis_client.hset(PlansRepo.task_id_key(task_id), mapping=mapping)
+        redis_client.hset(PlansRepo.task_id_key(task_id), values=mapping)

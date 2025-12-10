@@ -1,16 +1,15 @@
 import json
 import uuid
 from datetime import datetime, UTC
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+
 from django.contrib.auth.hashers import make_password
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from ..repo import UsersRepo
-from .auth import issue_jwt
-from core.utils import ok, err
-from core.idempotency import ensure
 from core.exceptions import BusinessError, ErrorCode
+from core.utils import ok, err
+from .auth import issue_jwt
+from ..repo import UsersRepo
 
 
 @csrf_exempt
@@ -25,13 +24,13 @@ def register(request):
     email = data.get("email")
     phone = data.get("phone_number")
     if not username or not password:
-        raise BusinessError(ErrorCode.MISSING_PARAMS)
+        return err(ErrorCode.MISSING_PARAMS)
     if UsersRepo.exists_username(username):
-        raise BusinessError(ErrorCode.USERNAME_EXISTS)
+        return err(ErrorCode.USERNAME_EXISTS)
     idem = request.headers.get("Idempotency-Key")
     from core.idempotency import ensure as _ensure
     if not _ensure(UsersRepo.client(), "register", f"{username}:{idem}" if idem else "", ttl_seconds=3600):
-        raise BusinessError(ErrorCode.REQUEST_ERROR)
+        return err(ErrorCode.REQUEST_ERROR)
     user_id = str(uuid.uuid4())
     registration_date = datetime.now(UTC).isoformat()
     password_hash = make_password(password)

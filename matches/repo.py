@@ -36,15 +36,15 @@ class MatchesRepo:
 
     @staticmethod
     def get_job_profile_id(title: str, industry: str):
-        return redis_client.get(MatchesRepo.job_index_key(title, industry)) if redis_client.redis else None
+        return redis_client.get(MatchesRepo.job_index_key(title, industry)) if redis_client else None
 
     @staticmethod
     def get_job_profile(pid: str):
-        return redis_client.hgetall(MatchesRepo.job_id_key(pid)) if redis_client.redis else {}
+        return redis_client.hgetall(MatchesRepo.job_id_key(pid)) if redis_client else {}
 
     @staticmethod
     def get_school(sid: str):
-        return redis_client.hgetall(MatchesRepo.school_id_key(sid)) if redis_client.redis else {}
+        return redis_client.hgetall(MatchesRepo.school_id_key(sid)) if redis_client else {}
 
     @staticmethod
     def get_job_ids():
@@ -58,7 +58,7 @@ class MatchesRepo:
 
     @staticmethod
     def set_job_profile(pid: str, mapping: dict):
-        redis_client.hset(MatchesRepo.job_id_key(pid), mapping=mapping)
+        redis_client.hset(MatchesRepo.job_id_key(pid), values=mapping)
 
     @staticmethod
     def set_job_index(title: str, industry: str, pid: str):
@@ -74,7 +74,7 @@ class MatchesRepo:
 
     @staticmethod
     def set_school(sid: str, mapping: dict):
-        redis_client.hset(MatchesRepo.school_id_key(sid), mapping=mapping)
+        redis_client.hset(MatchesRepo.school_id_key(sid), values=mapping)
 
     @staticmethod
     def set_school_index(slug: str, sid: str):
@@ -90,7 +90,7 @@ class MatchesRepo:
 
     @staticmethod
     def create_match(mid: str, mapping: dict):
-        redis_client.hset(MatchesRepo.match_id_key(mid), mapping=mapping)
+        redis_client.hset(MatchesRepo.match_id_key(mid), values=mapping)
 
     @staticmethod
     def get_match(mid: str):

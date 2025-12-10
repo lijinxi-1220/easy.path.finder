@@ -2,19 +2,6 @@
 
 提供课程/实习推荐、导师列表查询、导师咨询申请、国际项目推荐、会员订阅接口。统一使用 JWT 认证。
 
-## 路由
-- `services/urls.py`
-  - `GET  /service/recommend` → 课程/实习推荐（`services/api/recommend.py:5`）
-  - `GET  /service/mentors` → 导师列表查询（`services/api/mentors.py:5`）
-  - `POST /service/consult` → 导师咨询申请（`services/api/consult.py:6`）
-  - `GET  /service/projects` → 国际项目推荐（`services/api/projects.py:5`）
-  - `POST /service/subscription` → 会员订阅（`services/api/subscription.py:6`）
-  - `POST /service/subscription/webhook` → 会员订阅回调（`services/api/subscription_webhook.py:6`）
-
-## 配置
-- Webhook 密钥：`services/config.py:SUBSCRIPTION_WEBHOOK_SECRET`
-- Redis 客户端：复用 `core.redis_client`
-
 ## IDL（请求/响应）
 - `GET /service/recommend`
   - 请求参数：`service_type`(`course|internship`)、分页 `page|page_size`、排序 `sort_by|sort_order`
@@ -35,14 +22,6 @@
   - 请求头：`X-Signature`（HMAC-SHA256，密钥 `services/config.py:SUBSCRIPTION_WEBHOOK_SECRET`）
   - 请求体：`user_id`、`status`(`active|failed`)
   - 响应字段：`ok`
-
-## 错误码（与代码一致）
-- `1014` no_match（无匹配推荐）
-- `1012` mentor not found（导师不存在）
-- `1013` no_projects（无项目数据）
-- `1015` payment failed（支付失败/回调校验失败）
-- `1007` credentials error（凭证错误/未认证）
-- `1002` request error / invalid params（请求/参数错误）
 
 ## 示例
 ```bash
@@ -78,5 +57,4 @@ curl -s -X POST http://localhost:8000/service/subscription/webhook \
 ```
 
 ## 统一参数与校验
-- 列表接口统一支持：`page`、`page_size`、`sort_by`、`sort_order`；参数非法返回 `{ code: 1002, error: 'invalid_param' }`
-- 体校验（POST/PUT）使用 `validate_body`：必填字段缺失或类型错误返回 `{ code: 1002, error: 'invalid_param|invalid_json' }`
+- 列表接口统一支持：`page`、`page_size`、`sort_by`、`sort_order`

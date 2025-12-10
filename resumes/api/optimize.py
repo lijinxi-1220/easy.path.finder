@@ -21,7 +21,7 @@ def optimize(request):
     r = ResumeRepo.get(resume_id)
     if not r or r.get("user_id") != user_id:
         return err(ErrorCode.RESUME_NOT_FOUND)
-    parsed = json.loads(r.get("parsed_content") or "{}")
+    # parsed = json.loads(r.get("parsed_content") or "{}")
     suggestions = [
         {"title": "增强量化成果", "detail": "用数据描述业绩，例如提升率、节省成本"},
         {"title": "优化关键词", "detail": f"加入与 {target_job or '目标岗位'} 相关的关键词"},

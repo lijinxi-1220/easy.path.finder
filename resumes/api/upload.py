@@ -1,10 +1,11 @@
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from django.core.files.uploadedfile import UploadedFile
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from core.exceptions import ErrorCode
 
 from core.utils import ok, err
 from users.api.auth import resolve_user_id
@@ -24,26 +25,25 @@ def _file_ext(name: str):
 @csrf_exempt
 @require_POST
 def upload_parse(request):
-    provided_uid = request.POST.get("user_id") or (request.GET.get("user_id") or "")
+    provided_uid = request.POST.get("user_id")
     user_id = resolve_user_id(request, provided_uid)
     if not user_id:
-        from core.exceptions import ErrorCode
         return err(ErrorCode.PERMISSION_DENIED)
     resume_name = request.POST.get("resume_name") or ""
     upfile: UploadedFile | None = request.FILES.get("resume_file")
 
     if not upfile:
         # 允许后续通过 JSON 传 base64 文件，简化：此处直接判失败
-        return err(2002, "parse_failed")
+        return err(ErrorCode.PARSE_FAILED)
 
     ext = _file_ext(upfile.name)
     if not ext:
-        return err(2001, "format_not_supported", status=415)
+        return err(ErrorCode.FORMAT_NOT_SUPPORTED)
     if upfile.size > rconfig.MAX_FILE_MB * 1024 * 1024:
-        return err(2003, "file_too_large", status=413)
+        return err(ErrorCode.FILE_TOO_LARGE)
 
     resume_id = str(uuid.uuid4())
-    created_at = datetime.utcnow().isoformat()
+    created_at = datetime.now(UTC).isoformat()
     file_url = f"urn:resume:{resume_id}:{upfile.name}"
 
     # 伪解析：仅存储文件基本信息；后续可接入真实解析服务

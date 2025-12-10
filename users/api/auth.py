@@ -30,6 +30,7 @@ def auth_user_id(request):
         return None
     token = auth.split(" ", 1)[1]
     secret = config.JWT_SECRET or settings.SECRET_KEY
+    print(f"token: {token}, secret: {secret}")
     try:
         payload = jwt.decode(token, secret, algorithms=["HS256"])
     except JWTError:

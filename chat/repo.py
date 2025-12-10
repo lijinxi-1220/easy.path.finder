@@ -1,10 +1,10 @@
-from . import redis_client
+from core import redis_client
 
 
 class ChatRepo:
     @staticmethod
     def client():
-        return redis_client.redis
+        return redis_client
     @staticmethod
     def session_list_key(uid):
         return f"chat:session:list:{uid}"
@@ -23,12 +23,12 @@ class ChatRepo:
 
     @staticmethod
     def list_session_ids(uid):
-        cur = redis_client.redis.get(ChatRepo.session_list_key(uid)) or ""
+        cur = redis_client.get(ChatRepo.session_list_key(uid)) or ""
         return [x for x in cur.split(",") if x]
 
     @staticmethod
     def add_session(uid, cid, scene, created_at):
-        redis_client.redis.hset(ChatRepo.session_key(cid), mapping={
+        redis_client.hset(ChatRepo.session_key(cid), values={
             "chat_id": cid,
             "user_id": uid,
             "chat_scene": scene,
@@ -39,15 +39,15 @@ class ChatRepo:
 
     @staticmethod
     def update_session_last_ts(cid, ts):
-        redis_client.redis.hset(ChatRepo.session_key(cid), mapping={"last_ts": ts})
+        redis_client.hset(ChatRepo.session_key(cid), values={"last_ts": ts})
 
     @staticmethod
     def get_session(cid):
-        return redis_client.redis.hgetall(ChatRepo.session_key(cid)) if redis_client.redis else {}
+        return redis_client.hgetall(ChatRepo.session_key(cid)) if redis_client else {}
 
     @staticmethod
     def get_message(mid):
-        return redis_client.redis.hgetall(ChatRepo.msg_key(mid)) if redis_client.redis else {}
+        return redis_client.hgetall(ChatRepo.msg_key(mid)) if redis_client else {}
 
     @staticmethod
     def append_message(cid, mid, role, content_field, content, ts):
@@ -58,18 +58,20 @@ class ChatRepo:
             content_field: content,
             "timestamp": ts,
         }
-        redis_client.redis.hset(ChatRepo.msg_key(mid), mapping=mapping)
-        cur = redis_client.redis.get(ChatRepo.msg_list_key(cid)) or ""
-        redis_client.redis.set(ChatRepo.msg_list_key(cid), cur + ("," if cur else "") + mid)
+        redis_client.hset(ChatRepo.msg_key(mid), values=mapping)
+        cur = redis_client.get(ChatRepo.msg_list_key(cid)) or ""
+        redis_client.set(ChatRepo.msg_list_key(cid), cur + ("," if cur else "") + mid)
+
+
 
     @staticmethod
     def list_messages(cid):
-        mids = (redis_client.redis.get(ChatRepo.msg_list_key(cid)) or "").split(",")
+        mids = (redis_client.get(ChatRepo.msg_list_key(cid)) or "").split(",")
         return [m for m in mids if m]
 
     @staticmethod
     def ensure_session_list_contains(uid, cid):
-        cur = redis_client.redis.get(ChatRepo.session_list_key(uid)) or ""
+        cur = redis_client.get(ChatRepo.session_list_key(uid)) or ""
         ids = [x for x in cur.split(",") if x]
         if cid not in ids:
-            redis_client.redis.set(ChatRepo.session_list_key(uid), ",".join(ids + [cid]))
+            redis_client.set(ChatRepo.session_list_key(uid), ",".join(ids + [cid]))

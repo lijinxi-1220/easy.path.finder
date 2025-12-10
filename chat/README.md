@@ -2,32 +2,6 @@
 
 提供对话交互、简历完善引导与历史查询接口，统一使用 JWT 认证（身份从 `sub` 解析）。
 
-## 配置
-
-- `chat/config.py`：`CHAT_REDIS_REST_URL`、`CHAT_REDIS_REST_TOKEN`
-- 客户端：复用 `core.redis_client`
-
-## 路由与文件
-
-- `chat/urls.py`
-    - `POST /chat/interact` → `chat/api/interact.py:11`
-    - `GET  /chat/resume_guide` → `chat/api/guide.py:6`
-    - `GET  /chat/history` → `chat/api/history.py:6`
-    - `GET  /chat/messages` → `chat/api/messages.py:6`（按会话分页获取消息）
-
-## 错误码（与代码一致）
-
-- `5001` session_not_found（会话不存在或不属于当前用户）
-- `1021` resume_not_found（简历不存在或不属于当前用户）
-- `1009` user not found or no history（无对话记录）
-
-## 键约定
-
-- `chat:session:list:<user_id>` → 逗号分隔 `chat_id` 列表
-- `chat:session:<chat_id>` → Hash（`user_id`、`chat_scene`、`created_at`、`last_ts`）
-- `chat:messages:list:<chat_id>` → 逗号分隔 `message_id` 列表（按发生顺序）
-- `chat:message:<message_id>` → Hash（`role:user|assistant` 与内容）
-
 ## 接口定义
 
 ### 对话交互 `POST /chat/interact`

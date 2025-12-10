@@ -1,13 +1,12 @@
 import json
-from django.http import JsonResponse
+
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from core.exceptions import ErrorCode
-from ..repo import UsersRepo
-from .auth import auth_user_id, token_role
-from django.conf import settings
 from core.utils import ok, err
+from .auth import auth_user_id, token_role
+from ..repo import UsersRepo
 
 
 @csrf_exempt
@@ -26,8 +25,8 @@ def profile(request, user_id):
     if not data:
         return err(ErrorCode.USER_NOT_FOUND)
     try:
-        body = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except json.JSONDecodeError as e:
         return err(ErrorCode.REQUEST_ERROR)
     allowed = {"full_name", "gender", "avatar_url"}
     update = {k: v for k, v in body.items() if k in allowed}

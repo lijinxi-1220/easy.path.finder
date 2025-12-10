@@ -33,11 +33,11 @@ class ResumeRepo:
 
     @staticmethod
     def update(resume_id, mapping):
-        redis_client.hset(ResumeRepo.id_key(resume_id), mapping=mapping) if redis_client else None
+        redis_client.hset(ResumeRepo.id_key(resume_id), values=mapping) if redis_client else None
 
     @staticmethod
     def create(resume_id, mapping):
-        redis_client.hset(ResumeRepo.id_key(resume_id), mapping=mapping) if redis_client else None
+        redis_client.hset(ResumeRepo.id_key(resume_id), values=mapping) if redis_client else None
 
     @staticmethod
     def set_user_list(user_id, ids):

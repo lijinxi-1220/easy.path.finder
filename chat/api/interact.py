@@ -1,19 +1,22 @@
 import json
 import uuid
 from datetime import datetime, UTC
-from django.http import JsonResponse
-from core.utils import ok, err
+
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from ..config import MODEL_PROVIDER
+
 from chat.providers.mock import MockProvider
-from ..repo import ChatRepo
+from core.exceptions import ErrorCode
+from core.utils import ok, err
 from users.api.auth import auth_user_id
-from core.exceptions import BusinessError, ErrorCode
+from ..repo import ChatRepo
 
 
 def _session_list_key(uid):
     return ChatRepo.session_list_key(uid)
+
+
+MODEL_PROVIDER = "mock"
 
 
 @csrf_exempt

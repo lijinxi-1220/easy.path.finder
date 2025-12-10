@@ -60,19 +60,19 @@ class UsersRepo:
 
     @staticmethod
     def update(user_id: str, mapping: dict):
-        redis_client.hset(UsersRepo.id_key(user_id), mapping=mapping)
+        redis_client.hset(UsersRepo.id_key(user_id), values=mapping)
 
     @staticmethod
     def create_user(user_id: str, mapping: dict):
-        redis_client.hset(UsersRepo.id_key(user_id), mapping=mapping)
+        redis_client.hset(UsersRepo.id_key(user_id),values=mapping)
 
     @staticmethod
     def update_fields(user_id: str, mapping: dict):
-        redis_client.hset(UsersRepo.id_key(user_id), mapping=mapping)
+        redis_client.hset(UsersRepo.id_key(user_id), values=mapping)
 
     @staticmethod
     def update_last_login_date(user_id: str, last_login_date: str):
-        redis_client.hset(UsersRepo.id_key(user_id), mapping={"last_login_date": last_login_date})
+        redis_client.hset(UsersRepo.id_key(user_id), values={"last_login_date": last_login_date})
 
     @staticmethod
     def exists_username(username: str):

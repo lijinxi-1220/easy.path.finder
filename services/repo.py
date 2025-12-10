@@ -53,7 +53,7 @@ class ServicesRepo:
 
     @staticmethod
     def get_svc(svc_type, sid):
-        return redis_client.hgetall(ServicesRepo.svc_id_key(svc_type, sid)) if redis_client.redis else {}
+        return redis_client.hgetall(ServicesRepo.svc_id_key(svc_type, sid)) if redis_client else {}
 
     @staticmethod
     def get_mentor_ids(field):
@@ -62,7 +62,7 @@ class ServicesRepo:
 
     @staticmethod
     def get_mentor(mid):
-        return redis_client.hgetall(ServicesRepo.mentor_id_key(mid)) if redis_client.redis else {}
+        return redis_client.hgetall(ServicesRepo.mentor_id_key(mid)) if redis_client else {}
 
     @staticmethod
     def get_project_ids(pt):
@@ -71,23 +71,23 @@ class ServicesRepo:
 
     @staticmethod
     def get_project(pid):
-        return redis_client.hgetall(ServicesRepo.project_id_key(pid)) if redis_client.redis else {}
+        return redis_client.hgetall(ServicesRepo.project_id_key(pid)) if redis_client else {}
 
     @staticmethod
     def get_subscription(uid):
-        return redis_client.hgetall(ServicesRepo.subscription_key(uid)) if redis_client.redis else {}
+        return redis_client.hgetall(ServicesRepo.subscription_key(uid)) if redis_client else {}
 
     @staticmethod
     def update_subscription(uid, mapping):
-        redis_client.hset(ServicesRepo.subscription_key(uid), mapping=mapping)
+        redis_client.hset(ServicesRepo.subscription_key(uid), values=mapping)
 
     @staticmethod
     def get_consult(app_id):
-        return redis_client.hgetall(ServicesRepo.consult_id_key(app_id)) if redis_client.redis else {}
+        return redis_client.hgetall(ServicesRepo.consult_id_key(app_id)) if redis_client else {}
 
     @staticmethod
     def create_consult(app_id, mapping):
-        redis_client.hset(ServicesRepo.consult_id_key(app_id), mapping=mapping)
+        redis_client.hset(ServicesRepo.consult_id_key(app_id), values=mapping)
 
     @staticmethod
     def set_consult_idx(uid, mentor_id, time_str, app_id, ttl_seconds):

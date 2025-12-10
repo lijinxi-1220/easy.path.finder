@@ -19,7 +19,7 @@ def choose(module_value: str, env_name: str):
 
 
 def is_debug():
-    return os.getenv("EASY_PATH_DEBUG") == "1" or True
+    return os.getenv("EASY_PATH_DEBUG") == "1" or False
 
 
 def get_redis():

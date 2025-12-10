@@ -146,10 +146,10 @@ components:
       type: object
       properties:
         action: { type: string, enum: [ list, get, update, delete ] }
-        user_id: { type: string }
-        resume_id: { type: string }
-        resume_name: { type: string }
-        is_default: { type: boolean }
+        user_id: { type: string, nullable: true }
+        resume_id: { type: string, nullable: true }
+        resume_name: { type: string,  nullable: true }
+        is_default: { type: boolean, nullable: true }
       required: [ action ]
     ResumeManageResponse:
       oneOf:
@@ -488,19 +488,8 @@ paths:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
         '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
   /profile/{user_id}:
-    get:
-      summary: 用户资料
-      security: [ { bearerAuth: [ ] } ]
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
-        '401': { description: Unauthorized }
-    put:
-      summary: 更新资料
+    post:
+      summary: 用户资料 or 更新资料
       security: [ { bearerAuth: [ ] } ]
       parameters:
         - in: path
@@ -508,23 +497,25 @@ paths:
           required: true
           schema: { type: string }
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
               type: object
               properties:
-                full_name: { type: string }
-                gender: { type: string }
-                avatar_url: { type: string }
+                full_name: { type: string, nullable: true }
+                gender: { type: string, nullable: true }
+                avatar_url: { type: string, nullable: true }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
   /logout:
     post:
       summary: 退出登录
       security: [ { bearerAuth: [ ] } ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/LogoutResponse' } } } }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
   /resume/upload:
     post:
       summary: 简历上传解析
@@ -538,7 +529,7 @@ paths:
               properties:
                 resume_name: { type: string }
                 resume_file: { type: string, format: binary }
-                skills: { type: string }
+                skills: { type: string, nullable: true }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ResumeUploadResponse' } } } }
   /resume/score:
@@ -570,7 +561,7 @@ paths:
   /resume/manage:
     post:
       summary: 简历管理（action 路由）
-      security: [ { bearerAuth: [] } ]
+      security: [ { bearerAuth: [ ] } ]
       requestBody:
         required: true
         content:
@@ -706,34 +697,6 @@ paths:
       responses:
         '200': { description: OK, content: { application/json: { schema: { type: object, properties: { imported: { type: integer } } } } } }
   /plan/goals:
-    get:
-      summary: 目标列表
-      security: [ { bearerAuth: [ ] } ]
-      parameters:
-        - in: query
-          name: goal_id
-          required: false
-          schema: { type: string }
-        - in: query
-          name: status
-          required: false
-          schema: { type: string }
-        - in: query
-          name: q
-          required: false
-          schema: { type: string }
-        - in: query
-          name: due_from
-          required: false
-          schema: { type: string }
-        - in: query
-          name: due_to
-          required: false
-          schema: { type: string }
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanGoalsListResponse' } } } }
     post:
       summary: 新建目标
       description: 支持 POST action 路由：当 body 包含 `action` 时可执行 list|get|update|delete；默认不含 `action` 为创建。
@@ -752,82 +715,7 @@ paths:
               required: [ goal_name ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanGoal' } } } }
-    put:
-      summary: 更新目标
-      security: [ { bearerAuth: [ ] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                goal_id: { type: string }
-                goal_name: { type: string }
-                description: { type: string }
-                target_date: { type: string }
-                status: { type: string }
-              required: [ goal_id ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanGoal' } } } }
-    delete:
-      summary: 删除目标
-      security: [ { bearerAuth: [ ] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                goal_id: { type: string }
-              required: [ goal_id ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { deleted: { type: boolean } } } } } }
-  /plan/tasks/generate:
-    post:
-      summary: 生成任务
-      security: [ { bearerAuth: [ ] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                goal_id: { type: string }
-              required: [ goal_id ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TasksListResponse' } } } }
   /plan/tasks:
-    get:
-      summary: 任务列表
-      security: [ { bearerAuth: [ ] } ]
-      parameters:
-        - in: query
-          name: goal_id
-          required: true
-          schema: { type: string }
-        - in: query
-          name: status
-          required: false
-          schema: { type: string }
-        - in: query
-          name: priority
-          required: false
-          schema: { type: string }
-        - in: query
-          name: due_from
-          required: false
-          schema: { type: string }
-        - in: query
-          name: due_to
-          required: false
-          schema: { type: string }
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TasksListResponse' } } } }
     post:
       summary: 创建任务
       description: 支持 POST action 路由：当 body 包含 `action` 时可执行 list|generate；默认不含 `action` 为创建。
@@ -846,24 +734,6 @@ paths:
                 priority: { type: string }
                 status: { type: string }
               required: [ goal_id, task_name ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanTask' } } } }
-    put:
-      summary: 更新任务
-      security: [ { bearerAuth: [ ] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                task_id: { type: string }
-                task_name: { type: string }
-                due_date: { type: string }
-                priority: { type: string }
-                status: { type: string }
-              required: [ task_id ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PlanTask' } } } }
   /plan/doc:
@@ -1062,7 +932,7 @@ paths:
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/WebhookResponse' } } } }
   /user/privacy:
-    put:
+    post:
       summary: 用户隐私设置
       security: [ { bearerAuth: [ ] } ]
       requestBody:

@@ -16,15 +16,15 @@ class UserDataRepo:
 
     @staticmethod
     def get_user_by_id(uid):
-        return redis_client.hgetall(f"user:id:{uid}") if redis_client.redis_client else {}
+        return redis_client.hgetall(f"user:id:{uid}") if redis_client else {}
 
     @staticmethod
     def set_privacy(uid, mapping):
-        redis_client.hset(UserDataRepo.privacy_key(uid), mapping=mapping)
+        redis_client.hset(UserDataRepo.privacy_key(uid), values=mapping)
 
     @staticmethod
     def get_privacy(uid):
-        return redis_client.hgetall(UserDataRepo.privacy_key(uid)) if redis_client.redis_client else {}
+        return redis_client.hgetall(UserDataRepo.privacy_key(uid)) if redis_client else {}
 
     @staticmethod
     def list_history(uid):
